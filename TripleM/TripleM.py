@@ -606,6 +606,9 @@ class Lobby(CTkToplevel):
 
         def proveedores_lobby():
             pr = Proveedores()
+
+        def tarifas_lobby():
+            pr = Tarifas()
         
         def agregar_usuario():
             usuario_agregar = UsuarioAgregar()
@@ -635,7 +638,12 @@ class Lobby(CTkToplevel):
         
         entradas_menu = Menu(self.menu, tearoff = 0)
         entradas_menu.add_command(label="Nuevo Producto", command = nuevo_producto_lobby)                     
-        entradas_menu.add_command(label="Reabastecer", command = reabastecer_lobby)                     
+        entradas_menu.add_command(label="Reabastecer", command = reabastecer_lobby) 
+
+        administrativo_menu = Menu(self.menu, tearoff = 0)
+        administrativo_menu.add_command(label="Categorias", command = categorias_lobby)                     
+        administrativo_menu.add_command(label="Proveedores", command = proveedores_lobby) 
+        administrativo_menu.add_command(label="Tarifas", command = tarifas_lobby)                            
 
         usuario_menu = Menu(self.menu, tearoff = 0)
         usuario_menu.add_command(label="Agregar", command = agregar_usuario)
@@ -651,8 +659,7 @@ class Lobby(CTkToplevel):
         self.menu.add_cascade (label="Consultas", menu = consultas_menu)
         self.menu.add_cascade (label="Entradas", menu = entradas_menu)
         self.menu.add_cascade (label="Salidas", command = salidas_lobby)        
-        self.menu.add_cascade (label="Categorias", command = categorias_lobby)
-        self.menu.add_cascade (label="Proveedores", command = proveedores_lobby)
+        self.menu.add_cascade (label="Administrativo", menu = administrativo_menu)        
         self.menu.add_cascade(label="Usuarios", menu = usuario_menu)
         self.menu.add_cascade(label = "Licencia", menu = licencia_menu)
         self.menu.add_cascade(label="Salir", menu = salir_menu)
@@ -1054,7 +1061,7 @@ class NuevoProducto(CTkToplevel):
                             )
                         cursor = conn.cursor()                    
 
-                        sql = f""" INSERT INTO `productos`(`Codigo`, `Nombre`, `CostoUsd`, `Cantidad`, `Categoria`) VALUES ('{self.texto_codigo.get()}','{self.texto_nombre.get()}','{self.texto_costo_usd.get()}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}') """
+                        sql = f""" INSERT INTO `productos`(`Codigo`, `Nombre`, `CostoUsd`, `Cantidad`, `Categoria`) VALUES ('{self.texto_codigo.get()}','{self.texto_nombre.get()}','{float(self.texto_costo_usd.get())/float(self.texto_cantidad.get())}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}') """
                         cursor.execute(sql)
                         conn.commit()
 
@@ -1448,6 +1455,103 @@ class Proveedores(CTkToplevel):
 
         self.btn_eliminar = CTkButton(self , text = "Eliminar", command = eliminar, width = 200, height = 50)
         self.btn_eliminar.place(x = 500, y = 400) 
+
+
+
+
+
+
+# **********************************************************************************
+# ***************************** Tarifas ********************************************
+# **********************************************************************************
+
+class Tarifas(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Tarifas")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 300
+        hventana = 300
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("300x300") 
+        self.resizable(False,False) 
+        self.after(250, lambda: self.iconbitmap('D:/gym_Coliseo/fotos_gym/gym_fondos/logo1.ico'))
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False)) 
+
+        self.imagen = CTkImage(Image.open("D:/gym_Coliseo/fotos_gym/gym_fondos/entrenadores.jpg"), size = (800,600))      
+        
+        self.label_imagen = CTkLabel(self, image = self.imagen, text = "")
+        self.label_imagen.place(x = 0 , y = 0) 
+
+        self.label_usd = CTkLabel(self,text="USD: ")   
+        self.label_usd.place(x=30,y=30)   
+
+        self.label_eur = CTkLabel(self,text="EUR: ")   
+        self.label_eur.place(x=30,y=70) 
+
+        self.label_combinado = CTkLabel(self,text="EUR - USD: ")   
+        self.label_combinado.place(x=30,y=110) 
+
+        combinado = StringVar()
+        combinado.set("")
+
+        self.label_combinado2 = CTkLabel(self,textvariable = combinado)   
+        self.label_combinado2.place(x=130,y=110) 
+
+        self.texto_usd = CTkEntry(self, width=70)
+        self.texto_usd.place(x=130,y=30)
+
+        self.texto_eur = CTkEntry(self, width=70)
+        self.texto_eur.place(x=130,y=70)
+
+        # mostremos los precios que tienen las tarifas actuales 
+        def mostrar_tarifa():
+            self.texto_usd.delete(0,END)
+            self.texto_eur.delete(0,END)
+            
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "triplem",
+                password = "123456",
+                database = "triplem"
+                )
+            cursor = conn.cursor()
+
+            sql = f""" SELECT * FROM `tarifas` """
+            cursor.execute(sql)
+            for index in cursor:
+                self.texto_usd.insert(0,index[0])
+                self.texto_eur.insert(0,index[1])
+                combinado.set(index[2])
+        mostrar_tarifa()
+
+        def modificar():
+            try:
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "triplem",
+                    password = "123456",
+                    database = "triplem"
+                    )
+                cursor = conn.cursor()
+
+                sql = f""" UPDATE `tarifas` SET `USD`='{self.texto_usd.get()}',`EUR`='{self.texto_eur.get()}',`EUR-USD`='{float(self.texto_eur.get())/float(self.texto_usd.get())}' """
+                cursor.execute(sql)
+                conn.commit()
+
+                concluido = messagebox.showinfo("Completado","Se han modificado las tarifas") 
+                mostrar_tarifa()
+            except:
+                error = messagebox.showerror("Error","No se pudieron modificar las tarifas")
+
+        self.btn_modificar = CTkButton(self, text="Modificar", command=modificar)
+        self.btn_modificar.place(x=90,y=200)
+            
 
 
 
