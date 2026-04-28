@@ -11,6 +11,9 @@ from openpyxl import *
 import pandas as pd 
 from tkcalendar import *
 import copy
+import shutil
+import sqlite3
+import os
 
 
 conn = mysql.connector.connect(
@@ -205,7 +208,7 @@ except:
 
 # ******************** Creando Tabla productos *******************
 try:
-    sql = """CREATE TABLE `triplem`.`productos` (`Codigo` INT NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Categoria` VARCHAR(50) NOT NULL  ) ENGINE = InnoDB; """
+    sql = """CREATE TABLE `triplem`.`productos` (`Codigo` VARCHAR(50) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Categoria` VARCHAR(50) NOT NULL  ) ENGINE = InnoDB; """
     cursor.execute(sql)
     conn.commit()
 except:
@@ -222,7 +225,34 @@ except:
 
 # ********************** creando tabla salidas ***********************************
 try:
-    sql = """CREATE TABLE `triplem`.`salidas` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` INT NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `CostoCup` FLOAT NOT NULL, `Precio` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Cliente` VARCHAR(50) NOT NULL) ENGINE = InnoDB;"""
+    sql = """CREATE TABLE `triplem`.`salidas` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` INT NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `CostoCup` FLOAT NOT NULL, `Precio` FLOAT NOT NULL, `Moneda` VARCHAR(50) NOT NULL, `Cantidad` INT NOT NULL, `Cliente` VARCHAR(50) NOT NULL, `Tipo` VARCHAR(50) NOT NULL) ENGINE = InnoDB;"""
+    cursor.execute(sql)
+    conn.commit()
+except:
+    temp = True
+
+
+# ********************** creando tabla para gastos asociados ***********************************
+try:
+    sql = """CREATE TABLE `triplem`.`asociados` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL, `Concepto` VARCHAR(100) NOT NULL, `Monto` FLOAT NOT NULL) ENGINE = InnoDB;"""
+    cursor.execute(sql)
+    conn.commit()
+except:
+    temp = True
+
+
+# ********************** creando tabla para gastos salario ***********************************
+try:
+    sql = """CREATE TABLE `triplem`.`salarios` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL, `Concepto` VARCHAR(100) NOT NULL, `Monto` FLOAT NOT NULL) ENGINE = InnoDB;"""
+    cursor.execute(sql)
+    conn.commit()
+except:
+    temp = True
+
+
+# ********************** creando tabla regalos ***********************************
+try:
+    sql = """CREATE TABLE `triplem`.`regalos` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` INT NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `CostoCup` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Concepto` VARCHAR(50) NOT NULL) ENGINE = InnoDB;"""
     cursor.execute(sql)
     conn.commit()
 except:
@@ -236,9 +266,26 @@ try:
 except:
     temp = True
 
+# *************************** creando tabla clientes ****************************
+try:
+    sql = """CREATE TABLE `triplem`.`clientes` (`Nombre` VARCHAR(50) NOT NULL ) ENGINE = InnoDB;"""
+    cursor.execute(sql)
+    conn.commit()
+except:
+    temp = True
+
 # *************************** creando tabla proveedores ****************************
 try:
     sql = """CREATE TABLE `triplem`.`proveedores` (`Nombre` VARCHAR(50) NOT NULL ) ENGINE = InnoDB;"""
+    cursor.execute(sql)
+    conn.commit()
+except:
+    temp = True
+
+
+# *************************** creando tabla trabajadores ****************************
+try:
+    sql = """CREATE TABLE `triplem`.`trabajadores` (`Nombre` VARCHAR(50) NOT NULL ) ENGINE = InnoDB;"""
     cursor.execute(sql)
     conn.commit()
 except:
@@ -271,15 +318,7 @@ class Autenticacion(CTk):
         self.geometry(f"+{posx}+{posy}")
         self.geometry("400x200")
         self.resizable(False,False)            
-        self.iconbitmap("D:/gym_Coliseo/fotos_gym/gym_fondos/logo1.ico")
-
-
-        ############ agregar el fondo de pantalla #########
-      
-        self.imagen = CTkImage (light_image = Image.open("D:/gym_Coliseo/fotos_gym/gym_fondos/logo3.jpg"), size = (400,200))  
-
-        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
-        self.label_image.place(x = 0, y = 0)  
+        self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')        
 
         ################# textos y entradas ##################
 
@@ -417,17 +456,11 @@ class NuevaLicencia(CTkToplevel):
         posx = round(wtotal/2-wventana/2)
         posy = round(htotal/2-hventana/2)
         self.geometry(f"+{posx}+{posy}")
-        self.after(250, lambda: self.iconbitmap('D:/gym_Coliseo/fotos_gym/gym_fondos/logo1.ico'))
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))
         self.resizable(False,False)
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))
-       
-
-        self.imagen = CTkImage(Image.open("D:/gym_Coliseo/fotos_gym/gym_fondos/logo3.jpg"), size = (300,200))                         
-    
-        self.label_imagen = CTkLabel(self, image = self.imagen, text = "")
-        self.label_imagen.place(x = 0 , y = 0)
+        self.after(200, lambda: self.attributes('-topmost', False))        
 
         self.label = CTkLabel(self, text = "Introduzca la licencia nueva", font=("Times New Roman",14))
         self.label.place(x = 60 , y = 20)        
@@ -569,18 +602,8 @@ class Lobby(CTkToplevel):
         posx = round(wtotal/2-wventana/2)
         posy = round(htotal/2-hventana/2)
         self.geometry(f"+{posx}+{posy}")
-        self.after(250, lambda: self.iconbitmap('D:/gym_Coliseo/fotos_gym/gym_fondos/logo1.ico'))
-        self.resizable(False,False)   
-        
-        
-        # **************************** fondo *****************************************************
-        try:            
-            self.imagen = CTkImage(Image.open("D:/gym_Coliseo/fotos_gym/gym_fondos/lobby.jpg"), size = (1300,700))                  
-            
-            label_imagen_lobby = CTkLabel(self, image = self.imagen, text = "")
-            label_imagen_lobby.place(x = 0 , y = 0)
-        except:
-            error = messagebox.showinfo("Error","No se encontro foto")
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))
+        self.resizable(False,False)          
         
         firma = "Vence (" + str(fecha_vencimiento) + ")"
         self.label_triplem = CTkLabel(self, text = firma, font=("Times New Roman",16))
@@ -595,20 +618,263 @@ class Lobby(CTkToplevel):
         def reabastecer_lobby():
             reab = Reabastecer()
 
-        def salidas_lobby():
-            pass
+        def ventas_lobby():
+            vent = Ventas()
+
+        def control_venta():
+            # vamos a ponerle seguridad a los controles 
+            temp = CTkToplevel()
+            temp.title("Seguridad") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False)) 
+            temp.after(250, lambda: temp.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
+
+            temp.texto_pass = CTkEntry(temp, placeholder_text="Contraseña ...", show="*")
+            temp.texto_pass.pack(pady=5)
+
+            def aceptar():
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "triplem",
+                    password = "123456",
+                    database = "triplem"
+                    )
+                cursor = conn.cursor()
+
+                sql = """ SELECT `pass_economia` FROM `licencias` """
+                cursor.execute(sql)
+                for index in cursor:
+                    if index[0] == temp.texto_pass.get():
+                        temp.destroy()
+                        cont_vent = ControlVentas()
+                    else:
+                        messagebox.showerror("Error","La contraseña no es correcta")
+
+
+            temp.btn_cambiar = CTkButton(temp, text="Aceptar", command=aceptar)
+            temp.btn_cambiar.pack(pady=10)  
+
+            def modificar():
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "triplem",
+                    password = "123456",
+                    database = "triplem"
+                    )
+                cursor = conn.cursor()
+
+                sql = """ SELECT `pass_economia` FROM `licencias` """
+                cursor.execute(sql)
+                for index in cursor:
+                    if index[0] == temp.texto_pass.get():
+                        temp.destroy()
+                        root = CTkToplevel()
+                        root.title("Cambiar Contraseña") 
+                        htotal = root.winfo_screenheight()
+                        wtotal = root.winfo_screenwidth()
+                        wventana = 300
+                        hventana = 300
+                        posx = round(wtotal/2-wventana/2)
+                        posy = round(htotal/2-hventana/2)
+                        root.geometry(f"+{posx}+{posy}")
+                        root.lift()
+                        root.attributes('-topmost', True)
+                        root.after(200, lambda: root.attributes('-topmost', False)) 
+                        root.after(250, lambda: root.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
+
+                        root.texto_pass = CTkEntry(root, placeholder_text="Nueva Contraseña ...")
+                        root.texto_pass.pack(pady=5)
+
+                        root.texto_confirmar = CTkEntry(root, placeholder_text="Confirmar Contraseña ...")
+                        root.texto_confirmar.pack(pady=5)
+
+                        def modificar_pass():
+                            if root.texto_pass.get() == root.texto_confirmar.get():
+                                conn = mysql.connector.connect(
+                                    host = "localhost",
+                                    user = "triplem",
+                                    password = "123456",
+                                    database = "triplem"
+                                    )
+                                cursor = conn.cursor()
+
+                                sql = f""" UPDATE `licencias` SET `pass_economia`='{root.texto_pass.get()}'  """
+                                cursor.execute(sql)
+                                conn.commit()
+                                root.destroy()
+
+                            else:
+                                messagebox.showerror("Error","No coinciden las contraseñas escritas")
+
+                        root.btn_cambiar = CTkButton(root, text="Modificar", command=modificar_pass)
+                        root.btn_cambiar.pack(pady=10) 
+
+
+            temp.btn_cambiar = CTkButton(temp, text="Modificar", command=modificar)
+            temp.btn_cambiar.pack(pady=10)             
+
+        def control_regalo():
+            # vamos a ponerle seguridad a los controles 
+            temp = CTkToplevel()
+            temp.title("Seguridad") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False)) 
+            temp.after(250, lambda: temp.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
+
+            temp.texto_pass = CTkEntry(temp, placeholder_text="Contraseña ...", show="*")
+            temp.texto_pass.pack(pady=5)
+
+            def aceptar():
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "triplem",
+                    password = "123456",
+                    database = "triplem"
+                    )
+                cursor = conn.cursor()
+
+                sql = """ SELECT `pass_economia` FROM `licencias` """
+                cursor.execute(sql)
+                for index in cursor:
+                    if index[0] == temp.texto_pass.get():
+                        temp.destroy()
+                        cont_reg = ControlRegalos()
+                    else:
+                        messagebox.showerror("Error","La contraseña no es correcta")
+
+
+            temp.btn_cambiar = CTkButton(temp, text="Aceptar", command=aceptar)
+            temp.btn_cambiar.pack(pady=10)  
+
+            def modificar():
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "triplem",
+                    password = "123456",
+                    database = "triplem"
+                    )
+                cursor = conn.cursor()
+
+                sql = """ SELECT `pass_economia` FROM `licencias` """
+                cursor.execute(sql)
+                for index in cursor:
+                    if index[0] == temp.texto_pass.get():
+                        temp.destroy()
+                        root = CTkToplevel()
+                        root.title("Cambiar Contraseña") 
+                        htotal = root.winfo_screenheight()
+                        wtotal = root.winfo_screenwidth()
+                        wventana = 300
+                        hventana = 300
+                        posx = round(wtotal/2-wventana/2)
+                        posy = round(htotal/2-hventana/2)
+                        root.geometry(f"+{posx}+{posy}")
+                        root.lift()
+                        root.attributes('-topmost', True)
+                        root.after(200, lambda: root.attributes('-topmost', False)) 
+                        root.after(250, lambda: root.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
+
+                        root.texto_pass = CTkEntry(root, placeholder_text="Nueva Contraseña ...")
+                        root.texto_pass.pack(pady=5)
+
+                        root.texto_confirmar = CTkEntry(root, placeholder_text="Confirmar Contraseña ...")
+                        root.texto_confirmar.pack(pady=5)
+
+                        def modificar_pass():
+                            if root.texto_pass.get() == root.texto_confirmar.get():
+                                conn = mysql.connector.connect(
+                                    host = "localhost",
+                                    user = "triplem",
+                                    password = "123456",
+                                    database = "triplem"
+                                    )
+                                cursor = conn.cursor()
+
+                                sql = f""" UPDATE `licencias` SET `pass_economia`='{root.texto_pass.get()}'  """
+                                cursor.execute(sql)
+                                conn.commit()
+                                root.destroy()
+
+                            else:
+                                messagebox.showerror("Error","No coinciden las contraseñas escritas")
+
+                        root.btn_cambiar = CTkButton(root, text="Modificar", command=modificar_pass)
+                        root.btn_cambiar.pack(pady=10) 
+
+
+            temp.btn_cambiar = CTkButton(temp, text="Modificar", command=modificar)
+            temp.btn_cambiar.pack(pady=10)             
 
         def almacen_lobby():
-            pass
+            alm = Almacen()
 
+        def salarios_lobby():
+            sal = Salarios()
+
+        def asociados_lobby():
+            aso = Asociados()
+
+        def trabajadores_lobby():
+            tra = Trabajadores()
+        
         def categorias_lobby():
             cat = Categorias()
+
+        def clientes_lobby():
+            cli = Clientes()
 
         def proveedores_lobby():
             pr = Proveedores()
 
         def tarifas_lobby():
             pr = Tarifas()
+
+        def salva_lobby():            
+            # Crear carpeta de respaldos si no existe
+            carpeta_respaldo = "D:/TripleM/respaldos"
+            if not os.path.exists(carpeta_respaldo):
+                os.makedirs(carpeta_respaldo)
+            
+            # Nombre del archivo con fecha_actual
+            nombre_archivo = f"triplem_{fecha_actual}.sql"
+            ruta_completa = os.path.join(carpeta_respaldo, nombre_archivo)
+            
+            # Ruta de mysqldump en XAMPP
+            ruta_mysqldump = "C:/xampp/mysql/bin/mysqldump.exe"
+            
+            try:
+                # Comando con ruta completa
+                comando = f'"{ruta_mysqldump}" -u triplem -p123456 triplem > "{ruta_completa}"'
+                
+                # Ejecutar el comando
+                resultado = subprocess.run(comando, shell=True, capture_output=True, text=True)
+                
+                # Verificar que el archivo se creó y tiene contenido
+                if os.path.exists(ruta_completa) and os.path.getsize(ruta_completa) > 0:
+                    messagebox.showinfo("Éxito", f"Respaldo creado exitosamente:\n{ruta_completa}\nTamaño: {os.path.getsize(ruta_completa)} bytes")
+                else:
+                    # Mostrar error detallado
+                    error_msg = resultado.stderr if resultado.stderr else "No se pudo crear el respaldo"
+                    messagebox.showerror("Error", f"Error al crear respaldo:\n{error_msg}")
+                    
+            except Exception as e:
+                messagebox.showerror("Error", f"Error al crear respaldo:\n{str(e)}")
         
         def agregar_usuario():
             usuario_agregar = UsuarioAgregar()
@@ -630,8 +896,15 @@ class Lobby(CTkToplevel):
                 quit()      
 
          # para que se cierre todo el programa si cerramos esta ventana 
-        self.protocol("WM_DELETE_WINDOW", cerrar_programa)                                      
-            
+        self.protocol("WM_DELETE_WINDOW", cerrar_programa)   
+
+        control_menu = Menu(self.menu, tearoff = 0)   
+        control_menu.add_command(label="Control Regalo", command = control_regalo)                                     
+        control_menu.add_command(label="Control Venta", command = control_venta)    
+
+        gastos_menu = Menu(self.menu, tearoff = 0)   
+        gastos_menu.add_command(label="Asociados", command = asociados_lobby)                                     
+        gastos_menu.add_command(label="Salarios", command = salarios_lobby) 
 
         consultas_menu = Menu(self.menu, tearoff = 0)   
         consultas_menu.add_command(label="Almacen", command = almacen_lobby)        
@@ -643,6 +916,8 @@ class Lobby(CTkToplevel):
         administrativo_menu = Menu(self.menu, tearoff = 0)
         administrativo_menu.add_command(label="Categorias", command = categorias_lobby)                     
         administrativo_menu.add_command(label="Proveedores", command = proveedores_lobby) 
+        administrativo_menu.add_command(label="Clientes", command = clientes_lobby) 
+        administrativo_menu.add_command(label="Trabajadores", command = trabajadores_lobby) 
         administrativo_menu.add_command(label="Tarifas", command = tarifas_lobby)                            
 
         usuario_menu = Menu(self.menu, tearoff = 0)
@@ -656,10 +931,13 @@ class Lobby(CTkToplevel):
         salir_menu.add_command(label="Cerrar Cesion", command = cerrar_cesion)
         salir_menu.add_command(label="Cerrar Programa", command = cerrar_programa)
         
+        self.menu.add_cascade (label="Ventas", command = ventas_lobby) 
+        self.menu.add_cascade (label="Control", menu = control_menu)
+        self.menu.add_cascade (label="Gastos", menu = gastos_menu)
         self.menu.add_cascade (label="Consultas", menu = consultas_menu)
-        self.menu.add_cascade (label="Entradas", menu = entradas_menu)
-        self.menu.add_cascade (label="Salidas", command = salidas_lobby)        
-        self.menu.add_cascade (label="Administrativo", menu = administrativo_menu)        
+        self.menu.add_cascade (label="Entradas", menu = entradas_menu)                       
+        self.menu.add_cascade (label="Administrativo", menu = administrativo_menu)                 
+        self.menu.add_cascade (label="Salva", command = salva_lobby)        
         self.menu.add_cascade(label="Usuarios", menu = usuario_menu)
         self.menu.add_cascade(label = "Licencia", menu = licencia_menu)
         self.menu.add_cascade(label="Salir", menu = salir_menu)
@@ -682,15 +960,10 @@ class UsuarioAgregar(CTkToplevel):
         self.geometry(f"+{posx}+{posy}")
         self.geometry("400x300")
         self.resizable(False,False)        
-        self.after(250, lambda: self.iconbitmap('D:/gym_Coliseo/fotos_gym/gym_fondos/logo1.ico'))  
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))  
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))
-
-        self.imagen = CTkImage(Image.open("D:/gym_Coliseo/fotos_gym/gym_fondos/fondo_asistencia.jpg"), size = (400,300))                            
-        
-        self.label_imagen = CTkLabel(self, image = self.imagen, text = "")
-        self.label_imagen.place(x = 0 , y = 0)
+        self.after(200, lambda: self.attributes('-topmost', False))        
 
         # *********************** Label ****************************************
 
@@ -769,15 +1042,10 @@ class EliminarUsuario(CTkToplevel):
         self.geometry(f"+{posx}+{posy}")
         self.geometry("400x300")
         self.resizable(False,False)
-        self.after(250, lambda: self.iconbitmap('D:/gym_Coliseo/fotos_gym/gym_fondos/logo1.ico'))  
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))  
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))
-
-        self.imagen = CTkImage(Image.open("D:/gym_Coliseo/fotos_gym/gym_fondos/fondo_asistencia.jpg"), size = (400,300))                            
-        
-        self.label_imagen = CTkLabel(self, image = self.imagen, text = "")
-        self.label_imagen.place(x = 0 , y = 0)        
+        self.after(200, lambda: self.attributes('-topmost', False))           
         
         items_usuarios = []
 
@@ -872,21 +1140,10 @@ class NuevoProducto(CTkToplevel):
         self.geometry(f"+{posx}+{posy}")
         self.geometry("1000x600") 
         self.resizable(False,False)
-        self.after(250, lambda: self.iconbitmap('D:/gym_Coliseo/fotos_gym/gym_fondos/logo1.ico'))   
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))   
         self.lift()
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))        
-
-        # ****************** Imagen *********************
-                            
-        try:                        
-            self.imagen = CTkImage(Image.open("D:/gym_Coliseo/fotos_gym/gym_fondos/fondo_agregar_cliente.jpg"), size = (600,600))      
-
-            self.label_imagen = CTkLabel(self, image = self.imagen, text = "", width = 600, height = 600)
-            self.label_imagen.place(x = 0 , y = 0)
-        except:
-            error = messagebox.showinfo("Error", "No hay foto")
-        
 
         # ************************** Labels *************************        
 
@@ -921,6 +1178,7 @@ class NuevoProducto(CTkToplevel):
             temp.lift()
             temp.attributes('-topmost', True)
             temp.after(200, lambda: temp.attributes('-topmost', False)) 
+            temp.after(250, lambda: temp.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
 
             tar1 = 0           
             tar2 = 0           
@@ -962,11 +1220,13 @@ class NuevoProducto(CTkToplevel):
                 else:
                     if temp.texto_cup.get() != "":
                         resultado = round(float(temp.texto_cup.get())/tar1,2)
+                        self.texto_costo_usd.delete(0,END)
                         self.texto_costo_usd.insert(0,resultado)
                         temp.destroy()
 
                     else:
                         resultado = round(float(temp.texto_eur.get())*tar3,2)
+                        self.texto_costo_usd.delete(0,END)
                         self.texto_costo_usd.insert(0,resultado)
                         temp.destroy()
 
@@ -1138,16 +1398,10 @@ class Categorias(CTkToplevel):
         self.geometry(f"+{posx}+{posy}")
         self.geometry("800x600") 
         self.resizable(False,False) 
-        self.after(250, lambda: self.iconbitmap('D:/gym_Coliseo/fotos_gym/gym_fondos/logo1.ico'))
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False)) 
-
-
-        self.imagen = CTkImage(Image.open("D:/gym_Coliseo/fotos_gym/gym_fondos/entrenadores.jpg"), size = (800,600))      
-        
-        self.label_imagen = CTkLabel(self, image = self.imagen, text = "")
-        self.label_imagen.place(x = 0 , y = 0)    
+        self.after(200, lambda: self.attributes('-topmost', False))            
 
         estilos_tablas()        
         
@@ -1203,7 +1457,8 @@ class Categorias(CTkToplevel):
             temp.geometry(f"+{posx}+{posy}")
             temp.lift()
             temp.attributes('-topmost', True)
-            temp.after(200, lambda: temp.attributes('-topmost', False))  
+            temp.after(200, lambda: temp.attributes('-topmost', False)) 
+            temp.after(250, lambda: temp.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))  
 
             temp.texto_nombre = CTkEntry(temp, placeholder_text="Categoria ...")
             temp.texto_nombre.pack(pady = 10)
@@ -1292,6 +1547,165 @@ class Categorias(CTkToplevel):
 
 
 
+
+# **********************************************************************************
+# ******************************* Clientes *****************************************
+# **********************************************************************************
+
+class Clientes(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Clientes")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 800
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("800x600") 
+        self.resizable(False,False) 
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))            
+
+        estilos_tablas()        
+        
+        self.tabla = ttk.Treeview(self, columns = ())
+        self.tabla.column("#0", width = 500)
+
+        self.tabla.place(x = 200, y = 100)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Clientes")
+
+        scrollbar_entrenadores = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar_entrenadores.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar_entrenadores.set) 
+
+        def on_click(event):
+            global nombre_cliente
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                
+                nombre_cliente = self.tabla.item(item, "text")                
+
+        self.tabla.bind("<ButtonRelease-1>", on_click)
+
+        def llenar_tabla():
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "triplem",
+                password = "123456",
+                database = "triplem"
+                )
+            cursor = conn.cursor()
+
+            sql = """SELECT * FROM `clientes`;"""
+            cursor.execute(sql)
+
+            for index in cursor:
+                self.tabla.insert("",END, text = index[0])
+
+        llenar_tabla()
+
+        def agregar():           
+            temp = CTkToplevel()
+            temp.title("Agregar") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False))  
+            temp.after(250, lambda: temp.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
+
+            temp.texto_nombre = CTkEntry(temp, placeholder_text="Cliente ...")
+            temp.texto_nombre.pack(pady = 10)
+
+            def aceptar():
+                if temp.texto_nombre.get() == "":
+                    error = messagebox.showerror("Error","Debes escribir algun nombre para el cliente que quieres agregar")
+                else:
+                    # vemos que no se repita la categoria
+                    repetido = False
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = f""" SELECT * FROM `clientes` """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        if index[0] == temp.texto_nombre.get():
+                            repetido = True
+                            error = messagebox.showerror("Error","Ese cliente ya existe")
+
+                    if not repetido:
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "triplem",
+                            password = "123456",
+                            database = "triplem"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = f""" INSERT INTO `clientes`(`Nombre`) VALUES ('{temp.texto_nombre.get()}') """
+                        cursor.execute(sql)
+                        conn.commit()
+
+                        llenar_tabla()
+
+                        term = messagebox.showinfo("Terminado","Se ha agregado el cliente")
+                        temp.destroy()
+
+            temp.btn = CTkButton(temp, text="Aceptar", command=aceptar)
+            temp.btn.pack(pady = 10)
+
+        def eliminar():
+            global nombre_cliente           
+            try:
+                string = f"Vas a eliminar a {nombre_cliente} de los clientes"
+                conf = messagebox.askokcancel("Confirmar",string)    
+                if conf:
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = f""" DELETE FROM `clientes` WHERE `Nombre` = "{nombre_cliente}" """
+                    cursor.execute(sql)
+                    conn.commit()
+
+                    llenar_tabla()
+
+                    term = messagebox.showinfo("Terminado","Se ha eliminado el cliente")
+                    nombre_categoria = None
+
+            except:
+                error = messagebox.showerror("Error","Selecciona un cliente para eliminar")
+
+        self.btn_agregar = CTkButton(self, text = "Agregar", command = agregar, width = 200, height = 30)
+        self.btn_agregar.place(x = 100, y = 400)        
+
+        self.btn_eliminar = CTkButton(self , text = "Eliminar", command = eliminar, width = 200, height = 30)
+        self.btn_eliminar.place(x = 500, y = 400)  
+
+
+
 # **********************************************************************************
 # ***************************** Proveedores ****************************************
 # **********************************************************************************
@@ -1309,16 +1723,10 @@ class Proveedores(CTkToplevel):
         self.geometry(f"+{posx}+{posy}")
         self.geometry("800x600") 
         self.resizable(False,False) 
-        self.after(250, lambda: self.iconbitmap('D:/gym_Coliseo/fotos_gym/gym_fondos/logo1.ico'))
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False)) 
-
-
-        self.imagen = CTkImage(Image.open("D:/gym_Coliseo/fotos_gym/gym_fondos/entrenadores.jpg"), size = (800,600))      
-        
-        self.label_imagen = CTkLabel(self, image = self.imagen, text = "")
-        self.label_imagen.place(x = 0 , y = 0)    
+        self.after(200, lambda: self.attributes('-topmost', False))          
 
         estilos_tablas()        
         
@@ -1375,6 +1783,7 @@ class Proveedores(CTkToplevel):
             temp.lift()
             temp.attributes('-topmost', True)
             temp.after(200, lambda: temp.attributes('-topmost', False))  
+            temp.after(250, lambda: temp.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
 
             temp.texto_nombre = CTkEntry(temp, placeholder_text="Proveedores ...")
             temp.texto_nombre.pack(pady = 10)
@@ -1458,6 +1867,164 @@ class Proveedores(CTkToplevel):
 
 
 
+# **********************************************************************************
+# ***************************** Trabajadores ****************************************
+# **********************************************************************************
+
+class Trabajadores(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Trabajadores")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 800
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("800x600") 
+        self.resizable(False,False) 
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))          
+
+        estilos_tablas()  
+
+        self.tabla = ttk.Treeview(self, columns = ())
+        self.tabla.column("#0", width = 500)
+
+        self.tabla.place(x = 200, y = 100)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Trabajadores")
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set)
+
+        def on_click(event):
+            global nombre_trabajadores
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                
+                nombre_trabajadores = self.tabla.item(item, "text")                
+
+        self.tabla.bind("<ButtonRelease-1>", on_click)
+
+        def llenar_tabla():
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "triplem",
+                password = "123456",
+                database = "triplem"
+                )
+            cursor = conn.cursor()
+
+            sql = """SELECT * FROM `trabajadores`;"""
+            cursor.execute(sql)
+
+            for index in cursor:
+                self.tabla.insert("",END, text = index[0])
+
+        llenar_tabla()
+
+
+        def agregar():           
+            temp = CTkToplevel()
+            temp.title("Agregar") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False))  
+            temp.after(250, lambda: temp.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
+
+            temp.texto_nombre = CTkEntry(temp, placeholder_text="Trabajador ...")
+            temp.texto_nombre.pack(pady = 10)
+
+            def aceptar():
+                if temp.texto_nombre.get() == "":
+                    error = messagebox.showerror("Error","Debes escribir algun nombre")
+                else:
+                    # vemos que no se repita el trabajador
+                    repetido = False
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = f""" SELECT * FROM `trabajadores` """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        if index[0] == temp.texto_nombre.get():
+                            repetido = True
+                            error = messagebox.showerror("Error","Ese trabajador ya existe")
+
+                    if not repetido:
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "triplem",
+                            password = "123456",
+                            database = "triplem"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = f""" INSERT INTO `trabajadores`(`Nombre`) VALUES ('{temp.texto_nombre.get()}') """
+                        cursor.execute(sql)
+                        conn.commit()
+
+                        llenar_tabla()
+
+                        term = messagebox.showinfo("Terminado","Se ha agregado el trabajador")
+                        temp.destroy()
+
+            temp.btn = CTkButton(temp, text="Aceptar", command=aceptar)
+            temp.btn.pack(pady = 10)
+
+
+        def eliminar():
+            global nombre_trabajadores           
+            try:
+                string = f"Vas a eliminar a {nombre_trabajadores} de los trabajadores"
+                conf = messagebox.askokcancel("Confirmar",string)    
+                if conf:
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = f""" DELETE FROM `trabajadores` WHERE `Nombre` = "{nombre_trabajadores}" """
+                    cursor.execute(sql)
+                    conn.commit()
+
+                    llenar_tabla()
+
+                    term = messagebox.showinfo("Terminado","Se ha eliminado el trabajador")
+                    nombre_trabajadores = None
+
+            except:
+                error = messagebox.showerror("Error","Selecciona un trabajador para eliminar") 
+
+
+        self.btn_agregar = CTkButton(self, text = "Agregar", command = agregar, width = 200, height = 50)
+        self.btn_agregar.place(x = 100, y = 400)        
+
+        self.btn_eliminar = CTkButton(self , text = "Eliminar", command = eliminar, width = 200, height = 50)
+        self.btn_eliminar.place(x = 500, y = 400) 
 
 
 
@@ -1478,15 +2045,10 @@ class Tarifas(CTkToplevel):
         self.geometry(f"+{posx}+{posy}")
         self.geometry("300x300") 
         self.resizable(False,False) 
-        self.after(250, lambda: self.iconbitmap('D:/gym_Coliseo/fotos_gym/gym_fondos/logo1.ico'))
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False)) 
-
-        self.imagen = CTkImage(Image.open("D:/gym_Coliseo/fotos_gym/gym_fondos/entrenadores.jpg"), size = (800,600))      
-        
-        self.label_imagen = CTkLabel(self, image = self.imagen, text = "")
-        self.label_imagen.place(x = 0 , y = 0) 
+        self.after(200, lambda: self.attributes('-topmost', False))         
 
         self.label_usd = CTkLabel(self,text="USD: ")   
         self.label_usd.place(x=30,y=30)   
@@ -1531,23 +2093,60 @@ class Tarifas(CTkToplevel):
         mostrar_tarifa()
 
         def modificar():
-            try:
-                conn = mysql.connector.connect(
-                    host = "localhost",
-                    user = "triplem",
-                    password = "123456",
-                    database = "triplem"
-                    )
-                cursor = conn.cursor()
+            # hay que ver si hay que insertar (si no hay nada) o modificar
+            vacio = False
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "triplem",
+                password = "123456",
+                database = "triplem"
+                )
+            cursor = conn.cursor()
 
-                sql = f""" UPDATE `tarifas` SET `USD`='{self.texto_usd.get()}',`EUR`='{self.texto_eur.get()}',`EUR-USD`='{float(self.texto_eur.get())/float(self.texto_usd.get())}' """
-                cursor.execute(sql)
-                conn.commit()
+            sql = f""" SELECT COUNT(`USD`) FROM `tarifas`; """
+            cursor.execute(sql)
+            for index in cursor:
+                if index[0] == 0:
+                    vacio = True
 
-                concluido = messagebox.showinfo("Completado","Se han modificado las tarifas") 
-                mostrar_tarifa()
-            except:
-                error = messagebox.showerror("Error","No se pudieron modificar las tarifas")
+            if vacio:
+                try:
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = f""" INSERT INTO `tarifas`(`USD`, `EUR`, `EUR-USD`) VALUES ('{self.texto_usd.get()}','{self.texto_eur.get()}','{float(self.texto_eur.get())/float(self.texto_usd.get())}') """
+                    cursor.execute(sql)
+                    conn.commit()
+
+                    concluido = messagebox.showinfo("Completado","Se han modificado las tarifas") 
+                    mostrar_tarifa()
+
+                except:
+                    error = messagebox.showerror("Error","No se pudieron modificar las tarifas")
+
+            else:
+                try:
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = f""" UPDATE `tarifas` SET `USD`='{self.texto_usd.get()}',`EUR`='{self.texto_eur.get()}',`EUR-USD`='{float(self.texto_eur.get())/float(self.texto_usd.get())}' """
+                    cursor.execute(sql)
+                    conn.commit()
+
+                    concluido = messagebox.showinfo("Completado","Se han modificado las tarifas") 
+                    mostrar_tarifa()
+                except:
+                    error = messagebox.showerror("Error","No se pudieron modificar las tarifas")
 
         self.btn_modificar = CTkButton(self, text="Modificar", command=modificar)
         self.btn_modificar.place(x=90,y=200)
@@ -1572,16 +2171,16 @@ class Reabastecer(CTkToplevel):
         self.geometry(f"+{posx}+{posy}")
         self.geometry("1000x600") 
         self.resizable(False,False)
-        self.after(250, lambda: self.iconbitmap('D:/gym_Coliseo/fotos_gym/gym_fondos/logo1.ico'))   
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))   
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))         
+        self.after(200, lambda: self.attributes('-topmost', False))  
 
         estilos_tablas()        
         
-        self.tabla = ttk.Treeview(self, columns = ("Nombre", "Costo Usd", "Cantidad", "Categoria"), show="headings")
+        self.tabla = ttk.Treeview(self, columns = ("Nombre", "Costo Usd", "Cantidad", "Categoria"))
         self.tabla.column("#0", width = 100)
-        self.tabla.column("Nombre", width = 100)
+        self.tabla.column("Nombre", width = 200)
         self.tabla.column("Costo Usd", width = 100)
         self.tabla.column("Cantidad", width = 100)
         self.tabla.column("Categoria", width = 100)
@@ -1599,6 +2198,1566 @@ class Reabastecer(CTkToplevel):
         scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
 
         self.tabla.config(yscrollcommand = scrollbar.set)
+
+        def llenar_reabastecer(event):
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "triplem",
+                password = "123456",
+                database = "triplem"
+                )
+            cursor = conn.cursor()
+
+            sql = f""" SELECT * FROM productos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%'; """
+            cursor.execute(sql)
+            for index in cursor:
+                self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],))         
+
+        # vamos a hacer un buscador 
+
+        self.label_buscador = CTkLabel(self,text="------------------------------ Buscador ------------------------------")
+        self.label_buscador.place(x=630,y=80)
+
+
+        self.texto_buscador_codigo = CTkEntry(self,placeholder_text="Buscar por codigo ...")
+        self.texto_buscador_codigo.place(x=610,y=120)          
+
+        self.texto_buscador_codigo.bind("<KeyRelease>", llenar_reabastecer) 
+
+        self.texto_buscador_nombre = CTkEntry(self,placeholder_text="Buscar por nombre ...")
+        self.texto_buscador_nombre.place(x=770,y=120) 
+
+        self.texto_buscador_nombre.bind("<KeyRelease>", llenar_reabastecer )   
+
+        llenar_reabastecer(True)
+
+        # cuando demos 2ble click abriremos una ventana para hacer el reabastecimiento a ese producto seleccionado
+        def reabastecer(event):
+            global codigo
+            # vamos a capturar el codigo del numero que vamos a reabastecer
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                
+                codigo = self.tabla.item(item, "text")  
+
+            # vamos a crear la ventana modal
+            temp = CTkToplevel()
+            temp.title("Reabastecer") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 200
+            hventana = 200
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"200x200+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False)) 
+            temp.after(250, lambda: temp.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
+
+            def convertir():
+                root = CTkToplevel()
+                root.title("Cambio de Moneda") 
+                htotal = root.winfo_screenheight()
+                wtotal = root.winfo_screenwidth()
+                wventana = 300
+                hventana = 300
+                posx = round(wtotal/2-wventana/2)
+                posy = round(htotal/2-hventana/2)
+                root.geometry(f"+{posx}+{posy}")
+                root.lift()
+                root.attributes('-topmost', True)
+                root.after(200, lambda: root.attributes('-topmost', False)) 
+                root.after(250, lambda: root.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
+
+                tar1 = 0           
+                tar2 = 0           
+                tar3 = 0 
+
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "triplem",
+                    password = "123456",
+                    database = "triplem"
+                    )
+                cursor = conn.cursor()
+
+                sql = """SELECT * FROM `tarifas`;"""
+                cursor.execute(sql)
+                for index in cursor:
+                    tar1 = index[0]
+                    tar2 = index[1]
+                    tar3 = index[2]
+
+                tarifa = f"Tarifa:  1USD = {tar1}CUP,  1EUR = {tar2}CUP, 1EUR = {tar3}CUP"                      
+
+                root.label_tarifa = CTkLabel(root,text=tarifa, font=("Times New Roman",16))
+                root.label_tarifa.pack(pady=10)
+
+                root.texto_cup = CTkEntry(root, placeholder_text="CUP ...")
+                root.texto_cup.pack(pady=5)
+
+                root.texto_eur = CTkEntry(root, placeholder_text="EUR ...")
+                root.texto_eur.pack(pady=5)
+
+                def cambiar():
+                    temp.texto_costo_usd.delete(0,END)
+                    if root.texto_cup.get() == "" and root.texto_eur.get() == "":
+                        error = messagebox.showerror("Error", "Debes escribir en algun campo la cantidad a cambiar")
+
+                    elif root.texto_cup.get() != "" and root.texto_eur.get() != "":
+                        error = messagebox.showerror("Error", "Debes escribir solo en un campo, no en ambos")
+
+                    else:
+                        if root.texto_cup.get() != "":
+                            resultado = round(float(root.texto_cup.get())/tar1,2)
+                            temp.texto_costo_usd.insert(0,resultado)
+                            root.destroy()
+
+                        else:
+                            resultado = round(float(root.texto_eur.get())*tar3,2)
+                            temp.texto_costo_usd.insert(0,resultado)
+                            root.destroy()
+
+
+                root.btn_cambiar = CTkButton(root, text="Cambiar e Insertar", command=cambiar)
+                root.btn_cambiar.pack(pady=10) 
+
+
+            temp.btn_cambio = CTkButton(temp,text="Cambio Moneda", command=convertir)
+            temp.btn_cambio.pack(pady=5)
+
+            temp.texto_costo_usd = CTkEntry(temp, placeholder_text="Costo en usd ...")
+            temp.texto_costo_usd.pack(pady=5)            
+
+            temp.texto_cantidad = CTkEntry(temp, placeholder_text="Cantidad ...")
+            temp.texto_cantidad.pack(pady=5)
+
+            def reabastecer_producto():
+                string = f"Vamos a reestablecer el producto de codigo {codigo}"
+                conf = messagebox.askokcancel("Confirmar",string)
+                if conf:
+                    try:
+                        # aqui haremos 2 cambios en la bd, la cantidad que habra del producto y su costo en usd
+                        # para saber el promedio del costo
+                        costo_antes = 0
+                        cant_antes = 0
+                        promedio = 0
+
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "triplem",
+                            password = "123456",
+                            database = "triplem"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = f""" SELECT `CostoUsd`, `Cantidad` FROM `productos` WHERE `Codigo` = "{codigo}"; """
+                        cursor.execute(sql)
+                        for index in cursor:
+                            costo_antes = index[0]
+                            cant_antes = index[1]
+
+                        numerador = costo_antes*cant_antes + float(temp.texto_costo_usd.get())
+                        denominador = cant_antes + float(temp.texto_cantidad.get())
+
+                        promedio = numerador/denominador
+
+                        # llevemos los resultados a la base de datos
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "triplem",
+                            password = "123456",
+                            database = "triplem"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = f""" UPDATE `productos` SET `CostoUsd`='{promedio}',`Cantidad`= `Cantidad` + '{temp.texto_cantidad.get()}' WHERE `Codigo` = "{codigo}" """
+                        cursor.execute(sql)
+                        conn.commit()
+
+                        temp.destroy()
+                        llenar_reabastecer(True)
+
+                    except:
+                        error = messagebox.showerror("Error","No se pudo reabastecer el producto")
+
+            temp.btn_reabastecer = CTkButton(temp,text="Reabastecer", command=reabastecer_producto)
+            temp.btn_reabastecer.pack(pady=10)                          
+
+        self.tabla.bind("<Double-1>", reabastecer)
+
+
+
+# **********************************************************************************
+# ***********************************  Ventas **************************************
+# **********************************************************************************
+
+class Ventas(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Ventas")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x600") 
+        self.resizable(False,False)
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))   
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        estilos_tablas() 
+
+        self.label_productos = CTkLabel(self,text="Productos") 
+        self.label_productos.place(x=80,y=40) 
+
+        self.tabla = ttk.Treeview(self, columns = ("Nombre", "Costo USD", "Costo CUP", "Cantidad", "Categoria"))
+        self.tabla.column("#0", width = 100, anchor="center")
+        self.tabla.column("Nombre", width = 200, anchor="center")
+        self.tabla.column("Costo USD", width = 100, anchor="center")
+        self.tabla.column("Costo CUP", width = 100, anchor="center")
+        self.tabla.column("Cantidad", width = 100, anchor="center")
+        self.tabla.column("Categoria", width = 100, anchor="center")
+
+        self.tabla.place(x = 100, y = 100)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Codigo", anchor="center")
+        self.tabla.heading("Nombre", text = "Nombre", anchor="center")
+        self.tabla.heading("Costo USD", text = "Costo USD", anchor="center")
+        self.tabla.heading("Costo CUP", text = "Costo CUP", anchor="center")
+        self.tabla.heading("Cantidad", text = "Cantidad", anchor="center")
+        self.tabla.heading("Categoria", text = "Categoria", anchor="center")
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set)
+
+        # 1 usd = ?
+        precio_usd = 0
+        conn = mysql.connector.connect(
+            host = "localhost",
+            user = "triplem",
+            password = "123456",
+            database = "triplem"
+            )
+        cursor = conn.cursor()
+
+        sql = f""" SELECT `USD` FROM `tarifas`; """
+        cursor.execute(sql)
+        for index in cursor:
+            precio_usd = index[0]
+
+        def llenar_ventas(event):
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "triplem",
+                password = "123456",
+                database = "triplem"
+                )
+            cursor = conn.cursor()
+
+            sql = f""" SELECT * FROM productos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%'; """
+            cursor.execute(sql)
+            for index in cursor:
+                self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[2]*precio_usd,index[3],index[4],))   
+
+        self.label_buscador = CTkLabel(self,text="------------------------------ Buscador ------------------------------")
+        self.label_buscador.place(x=700,y=80)
+
+        self.texto_buscador_codigo = CTkEntry(self,placeholder_text="Buscar por codigo ...",width=250)
+        self.texto_buscador_codigo.place(x=700,y=120)          
+
+        self.texto_buscador_codigo.bind("<KeyRelease>", llenar_ventas) 
+
+        self.texto_buscador_nombre = CTkEntry(self,placeholder_text="Buscar por nombre ...",width=250)
+        self.texto_buscador_nombre.place(x=700,y=160) 
+
+        self.texto_buscador_nombre.bind("<KeyRelease>", llenar_ventas ) 
+
+        llenar_ventas(True)
+
+        # cuando demos 2ble click abriremos una ventana para hacer la venta o regalo
+
+        def venta(event):
+            global codigo
+            global values
+            # vamos a capturar el codigo del numero que vamos a reabastecer
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                
+                codigo = self.tabla.item(item, "text")  
+                values = self.tabla.item(item, "values")  
+
+            temp = CTkToplevel()
+            temp.title("Vender") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 200
+            hventana = 400
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"200x400+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False))
+            temp.after(250, lambda: temp.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
+
+            opcion = IntVar(value=1)
+
+            temp.texto_precio_venta = CTkEntry(temp, placeholder_text="Precio Venta ...")            
+            moneda = ["CUP","USD"]
+            temp.texto_moneda = CTkComboBox(temp,values=moneda)
+            tipo = ["Minorista","Mayorista"]
+            temp.texto_tipo = CTkComboBox(temp,values=tipo)
+
+            cliente = []
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "triplem",
+                password = "123456",
+                database = "triplem"
+                )
+            cursor = conn.cursor()
+
+            sql = """ SELECT * FROM `clientes`  """
+            cursor.execute(sql)
+            for index in cursor:
+                cliente.append(index[0])
+
+            temp.texto_cliente = CTkComboBox(temp,values=cliente)
+            temp.texto_cliente.set("Cliente ...")
+            
+
+            temp.texto_concepto_del_regalo = CTkEntry(temp, placeholder_text="Concepto del Regalo ...")
+
+            def radio_select():
+                if opcion.get() == 1:                    
+                    temp.texto_precio_venta.pack(pady=5)               
+                    temp.texto_moneda.pack(pady=5)
+                    temp.texto_cliente.pack(pady=5)
+                    temp.texto_tipo.pack(pady=5)
+
+                    temp.texto_concepto_del_regalo.pack_forget()
+
+                elif opcion.get() == 2:
+                    temp.texto_concepto_del_regalo.pack(pady=5)
+
+                    temp.texto_precio_venta.pack_forget()              
+                    temp.texto_moneda.pack_forget()
+                    temp.texto_cliente.pack_forget()
+                    temp.texto_tipo.pack_forget()
+
+
+            temp.radio_vender = CTkRadioButton(temp, text="Vender",command=radio_select, variable=opcion, value=1)
+            temp.radio_vender.pack(pady=10)               
+
+            temp.radio_regalar = CTkRadioButton(temp, text="Regalar",command=radio_select, variable=opcion, value=2)
+            temp.radio_regalar.pack(pady=10)
+
+            temp.texto_cantidad = CTkEntry(temp, placeholder_text="Cantidad ...")
+            temp.texto_cantidad.pack(pady=5)
+
+            temp.texto_precio_venta.pack(pady=5)               
+            temp.texto_moneda.pack(pady=5)
+            temp.texto_cliente.pack(pady=5)
+            temp.texto_tipo.pack(pady=5)
+
+            def salida():
+                if opcion.get() == 1:          # es una venta
+                    try:
+                        string = f"Vas a vender {temp.texto_cantidad.get()} {values[0]}"
+                        conf = messagebox.askokcancel("Confirmar",string)
+                        if conf:
+                            # al poder escoger la moneda en el precio tenemos que cambiar el usd en caso que nos paguen en usd y dejarlo igual si nos cambian en cup
+                            precio_final = 0
+                            if temp.texto_moneda.get() == "CUP":
+                                precio_final = temp.texto_precio_venta.get()
+
+                            elif temp.texto_moneda.get() == "USD":
+                                conn = mysql.connector.connect(
+                                    host = "localhost",
+                                    user = "triplem",
+                                    password = "123456",
+                                    database = "triplem"
+                                    )
+                                cursor = conn.cursor()
+
+                                sql = """ SELECT `USD` FROM `tarifas`; """
+                                cursor.execute(sql)
+                                for index in cursor:
+                                    precio_final = float(temp.texto_precio_venta.get())*float(index[0])
+
+
+                            # encontremos el id de la salida 
+                            id_salida = 1
+                            conn = mysql.connector.connect(
+                                host = "localhost",
+                                user = "triplem",
+                                password = "123456",
+                                database = "triplem"
+                                )
+                            cursor = conn.cursor()
+
+                            sql = """SELECT MAX(Id) FROM `salidas`;"""
+                            cursor.execute(sql)
+                            for index in cursor:
+                                if index[0] == None:
+                                    pass
+
+                                else:
+                                    id_salida = index[0] + 1 
+
+                            # agreguemos la salida en la bd 
+                            conn = mysql.connector.connect(
+                                host = "localhost",
+                                user = "triplem",
+                                password = "123456",
+                                database = "triplem"
+                                )
+                            cursor = conn.cursor()
+
+                            sql = f""" INSERT INTO `salidas`(`Id`, `Fecha`, `Codigo`, `Nombre`, `CostoUsd`, `CostoCup`, `Precio`, `Moneda`, `Cantidad`, `Cliente`, `Tipo`) VALUES ('{id_salida}','{fecha_actual}','{codigo}','{values[0]}','{values[1]}','{values[2]}','{precio_final}','CUP','{temp.texto_cantidad.get()}','{temp.texto_cliente.get()}','{temp.texto_tipo.get()}') """
+                            cursor.execute(sql)
+                            conn.commit()
+
+                            # quitemos la cantidad vendida del almacen
+                            conn = mysql.connector.connect(
+                                host = "localhost",
+                                user = "triplem",
+                                password = "123456",
+                                database = "triplem"
+                                )
+                            cursor = conn.cursor()
+
+                            sql = f""" UPDATE `productos` SET `Cantidad` = `Cantidad` - {temp.texto_cantidad.get()} WHERE `Codigo` = "{codigo}" """
+                            cursor.execute(sql)
+                            conn.commit()
+
+                            llenar_ventas(True)
+                            temp.destroy()
+                    except:
+                        error = messagebox.showerror("Error","No se completo la venta \n Revise los datos introducidos")
+
+
+                elif opcion.get() == 2:        # es un regalo
+                    try:
+                        string = f"Vas a reagalar {temp.texto_cantidad.get()} {values[0]}"
+                        conf = messagebox.askokcancel("Confirmar",string)
+                        if conf:
+                            # encontremos el id de la salida 
+                            id_regalo = 1
+                            conn = mysql.connector.connect(
+                                host = "localhost",
+                                user = "triplem",
+                                password = "123456",
+                                database = "triplem"
+                                )
+                            cursor = conn.cursor()
+
+                            sql = """SELECT MAX(Id) FROM `regalos`;"""
+                            cursor.execute(sql)
+                            for index in cursor:
+                                if index[0] == None:
+                                    pass
+
+                                else:
+                                    id_regalo = index[0] + 1 
+
+                            # agreguemos el regalo en la bd 
+                            conn = mysql.connector.connect(
+                                host = "localhost",
+                                user = "triplem",
+                                password = "123456",
+                                database = "triplem"
+                                )
+                            cursor = conn.cursor()
+
+                            sql = f""" INSERT INTO `regalos`(`Id`, `Fecha`, `Codigo`, `Nombre`, `CostoUsd`, `CostoCup`, `Cantidad`, `Concepto`) VALUES ('{id_regalo}','{fecha_actual}','{codigo}','{values[0]}','{values[1]}','{values[2]}','{temp.texto_cantidad.get()}','{temp.texto_concepto_del_regalo.get()}') """
+                            cursor.execute(sql)
+                            conn.commit()
+
+                            # quitemos la cantidad regalada del almacen
+                            conn = mysql.connector.connect(
+                                host = "localhost",
+                                user = "triplem",
+                                password = "123456",
+                                database = "triplem"
+                                )
+                            cursor = conn.cursor()
+
+                            sql = f""" UPDATE `productos` SET `Cantidad` = `Cantidad` - {temp.texto_cantidad.get()} WHERE `Codigo` = "{codigo}" """
+                            cursor.execute(sql)
+                            conn.commit()
+
+                            llenar_ventas(True)
+                            temp.destroy()
+
+                    except:
+                        error = messagebox.showerror("Error","No se completo el regalo \n Revise los datos introducidos")
+
+            temp.btn_vender = CTkButton(temp,text="Aceptar",command=salida)
+            temp.btn_vender.pack(pady=20,side="bottom")
+
+        self.tabla.bind("<Double-1>", venta)
+
+
+
+# **********************************************************************************
+# *****************************  Control Regalos ***********************************
+# **********************************************************************************
+
+class ControlRegalos(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Control Regalos")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x600") 
+        self.resizable(False,False)
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))   
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        estilos_tablas()  
+
+        self.tabla = ttk.Treeview(self, columns = ("Fecha","Codigo", "Nombre", "Costo USD", "Costo CUP", "Cantidad", "Concepto"), show="headings")
+        self.tabla.column("#0", width = 100, anchor="center")
+        self.tabla.column("Fecha", width = 100, anchor="center")
+        self.tabla.column("Codigo", width = 75, anchor="center")
+        self.tabla.column("Nombre", width = 200, anchor="center")
+        self.tabla.column("Costo USD", width = 100, anchor="center")
+        self.tabla.column("Costo CUP", width = 100, anchor="center")
+        self.tabla.column("Cantidad", width = 75, anchor="center")
+        self.tabla.column("Concepto", width = 200, anchor="center")
+
+        self.tabla.place(x = 50, y = 100)        
+        self.tabla.config(height = 11)
+
+        self.tabla.heading("#0", text = "Id", anchor="center")
+        self.tabla.heading("Fecha", text = "Fecha", anchor="center")
+        self.tabla.heading("Codigo", text = "Codigo", anchor="center")
+        self.tabla.heading("Nombre", text = "Nombre", anchor="center")
+        self.tabla.heading("Costo USD", text = "Costo USD", anchor="center")
+        self.tabla.heading("Costo CUP", text = "Costo CUP", anchor="center")
+        self.tabla.heading("Cantidad", text = "Cantidad", anchor="center")
+        self.tabla.heading("Concepto", text = "Concepto", anchor="center")
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set)
+
+        def llenar_tabla(event):
+            try:
+                self.tabla.delete(*self.tabla.get_children())
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "triplem",
+                    password = "123456",
+                    database = "triplem"
+                    )
+                cursor = conn.cursor()
+
+                if self.texto_fecha_inicial.get() == "" or self.texto_fecha_final.get() == "":
+                    sql = f""" SELECT * FROM regalos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' """
+
+                else:
+                    sql = f""" SELECT * FROM regalos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' and `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+
+                cursor.execute(sql)
+                for index in cursor:
+                    self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],index[6],index[7],))  
+            except:
+                error = messagebox.showerror("Error","No se pudo actualizar la tabla")
+
+
+        # ahora la posibilidad de eliminar el pago con doble click
+        def eliminar_regalo(event): 
+            global id_regalo
+            global nombre_regalo
+            global codigo_regalo
+            global cantidad_regalo
+
+            # vamos a capturar el id del regalo que vamos a eliminar
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                
+                id_regalo = self.tabla.item(item, "text")  
+                codigo_regalo = self.tabla.item(item, "values")[1] 
+                nombre_regalo = self.tabla.item(item, "values")[2] 
+                cantidad_regalo = self.tabla.item(item, "values")[5]  
+
+            conf = messagebox.askokcancel("Confirmar","Se va a cancelar este regalo") 
+            if conf:
+                # primero debemos devolver el regalo al almacen
+                try:
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()               
+
+                    sql = f""" UPDATE `productos` SET `Cantidad`= `Cantidad` + '{cantidad_regalo}' WHERE `Codigo` = "{codigo_regalo}"; """
+                    cursor.execute(sql)
+                    conn.commit()                
+
+                except:
+                    error = messagebox.showerror("Error","No se pudo devolver el producto al almacen")  
+
+                # eliminamos el regalo de la base de datos
+                try:
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = f""" DELETE FROM `regalos` WHERE `Id` = "{id_regalo}" """
+                    cursor.execute(sql)
+                    conn.commit()
+                    
+                    llenar_tabla(True)
+
+                except:
+                    error = messagebox.showerror("Error","No se pudo borrar el regalo de la base de datos") 
+
+
+            
+        self.tabla.bind("<Double-1>", eliminar_regalo)
+
+
+        self.label_fechas = CTkLabel(self,text="---------- Control de fechas ----------")
+        self.label_fechas.place(x=750,y=80) 
+
+        self.texto_fecha_inicial = CTkEntry(self,placeholder_text="Fecha inicial ...")
+        self.texto_fecha_inicial.place(x=750,y=120) 
+
+        def fecha_inicial():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_inicial.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_inicial.insert(0,str(fecha_select)) 
+                llenar_tabla(True)
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack() 
+
+
+        self.btn_fecha_inicial = CTkButton(self,text="...",command=fecha_inicial, width = 27, height = 27)
+        self.btn_fecha_inicial.place(x=900 ,y=120 )
+
+        self.texto_fecha_final = CTkEntry(self,placeholder_text="Fecha final ...")
+        self.texto_fecha_final.place(x=750,y=160) 
+
+        def fecha_final():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_final.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_final.insert(0,str(fecha_select)) 
+                llenar_tabla(True)
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack()
+
+
+        self.btn_fecha_final = CTkButton(self,text="...",command=fecha_final, width = 27, height = 27)
+        self.btn_fecha_final.place(x=900 ,y=160 )
+
+
+        self.label_buscador = CTkLabel(self,text="---------- Buscador ----------")
+        self.label_buscador.place(x=750,y=220)
+
+        self.texto_buscador_codigo = CTkEntry(self,placeholder_text="Buscar por codigo ...")
+        self.texto_buscador_codigo.place(x=750,y=260)          
+
+        self.texto_buscador_codigo.bind("<KeyRelease>", llenar_tabla) 
+
+        self.texto_buscador_nombre = CTkEntry(self,placeholder_text="Buscar por nombre ...")
+        self.texto_buscador_nombre.place(x=750,y=300) 
+
+        self.texto_buscador_nombre.bind("<KeyRelease>", llenar_tabla )  
+
+        llenar_tabla(True)
+
+
+
+
+# **********************************************************************************
+# *****************************  Control Ventas ***********************************
+# **********************************************************************************
+
+class ControlVentas(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Control Ventas")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x600") 
+        self.resizable(False,False)
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))   
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        estilos_tablas()  
+
+        self.tabla = ttk.Treeview(self, columns = ("Fecha","Codigo", "Nombre", "Costo USD", "Costo CUP", "Precio", "Moneda", "Cantidad", "Cliente"), show="headings")
+        self.tabla.column("#0", width = 100, anchor="center")
+        self.tabla.column("Fecha", width = 100, anchor="center")
+        self.tabla.column("Codigo", width = 75, anchor="center")
+        self.tabla.column("Nombre", width = 200, anchor="center")
+        self.tabla.column("Costo USD", width = 100, anchor="center")
+        self.tabla.column("Costo CUP", width = 100, anchor="center")
+        self.tabla.column("Precio", width = 75, anchor="center")
+        self.tabla.column("Moneda", width = 75, anchor="center")
+        self.tabla.column("Cantidad", width = 75, anchor="center")
+        self.tabla.column("Cliente", width = 200, anchor="center")
+
+        self.tabla.place(x = 100, y = 300)        
+        self.tabla.config(height = 11)
+
+        self.tabla.heading("#0", text = "Id", anchor="center")
+        self.tabla.heading("Fecha", text = "Fecha", anchor="center")
+        self.tabla.heading("Codigo", text = "Codigo", anchor="center")
+        self.tabla.heading("Nombre", text = "Nombre", anchor="center")
+        self.tabla.heading("Costo USD", text = "Costo USD", anchor="center")
+        self.tabla.heading("Costo CUP", text = "Costo CUP", anchor="center")
+        self.tabla.heading("Precio", text = "Precio", anchor="center")
+        self.tabla.heading("Moneda", text = "Moneda", anchor="center")
+        self.tabla.heading("Cantidad", text = "Cantidad", anchor="center")
+        self.tabla.heading("Cliente", text = "Cliente", anchor="center")
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set)
+
+        # ahora la posibilidad de eliminar el pago con doble click
+        def eliminar_venta(event): 
+            global id_venta
+            global nombre_venta
+            global codigo_venta
+            global cantidad_venta
+
+            # vamos a capturar el id del regalo que vamos a eliminar
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                
+                id_venta = self.tabla.item(item, "text")  
+                codigo_venta = self.tabla.item(item, "values")[1] 
+                nombre_venta = self.tabla.item(item, "values")[2] 
+                cantidad_venta = self.tabla.item(item, "values")[7]  
+
+            conf = messagebox.askokcancel("Confirmar","Se va a cancelar esta venta") 
+            if conf:
+                # primero debemos devolver la venta al almacen
+                try:
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()               
+
+                    sql = f""" UPDATE `productos` SET `Cantidad`= `Cantidad` + '{cantidad_venta}' WHERE `Codigo` = "{codigo_venta}"; """
+                    cursor.execute(sql)
+                    conn.commit()                
+
+                except:
+                    error = messagebox.showerror("Error","No se pudo devolver el producto al almacen")  
+
+                # eliminamos la venta de la base de datos
+                try:
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = f""" DELETE FROM `salidas` WHERE `Id` = "{id_venta}" """
+                    cursor.execute(sql)
+                    conn.commit()
+                    
+                    llenar_tabla(True)
+
+                except:
+                    error = messagebox.showerror("Error","No se pudo borrar el regalo de la base de datos") 
+
+        self.tabla.bind("<Double-1>", eliminar_venta)
+
+        def llenar_tabla(event):
+            try:
+                self.tabla.delete(*self.tabla.get_children())
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "triplem",
+                    password = "123456",
+                    database = "triplem"
+                    )
+                cursor = conn.cursor()
+
+                if self.texto_fecha_inicial.get() == "" or self.texto_fecha_final.get() == "":
+                    sql = f""" SELECT * FROM salidas WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' """
+
+                else:
+                    sql = f""" SELECT * FROM salidas WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' and `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+
+                cursor.execute(sql)
+                for index in cursor:
+                    self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],index[6],index[7],index[8],index[9],))  
+
+            except:
+                error = messagebox.showerror("Error","No se pudo actualizar la tabla")
+
+
+        self.label_fechas = CTkLabel(self,text="---------- Control de fechas ----------")
+        self.label_fechas.place(x=200,y=50) 
+
+        self.texto_fecha_inicial = CTkEntry(self,placeholder_text="Fecha inicial ...")
+        self.texto_fecha_inicial.place(x=200,y=90) 
+
+        def fecha_inicial():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_inicial.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_inicial.insert(0,str(fecha_select)) 
+                llenar_tabla(True)
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack() 
+
+
+        self.btn_fecha_inicial = CTkButton(self,text="...",command=fecha_inicial, width = 27, height = 27)
+        self.btn_fecha_inicial.place(x=350 ,y=90 )
+
+        self.texto_fecha_final = CTkEntry(self,placeholder_text="Fecha final ...")
+        self.texto_fecha_final.place(x=200,y=130) 
+
+        def fecha_final():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_final.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_final.insert(0,str(fecha_select)) 
+                llenar_tabla(True)
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack()
+
+
+        self.btn_fecha_final = CTkButton(self,text="...",command=fecha_final, width = 27, height = 27)
+        self.btn_fecha_final.place(x=350 ,y=130 )
+
+
+        self.label_buscador = CTkLabel(self,text="---------- Buscador ----------")
+        self.label_buscador.place(x=600,y=50)
+
+        self.texto_buscador_codigo = CTkEntry(self,placeholder_text="Buscar por codigo ...")
+        self.texto_buscador_codigo.place(x=600,y=90)          
+
+        self.texto_buscador_codigo.bind("<KeyRelease>", llenar_tabla) 
+
+        self.texto_buscador_nombre = CTkEntry(self,placeholder_text="Buscar por nombre ...")
+        self.texto_buscador_nombre.place(x=600,y=130) 
+
+        self.texto_buscador_nombre.bind("<KeyRelease>", llenar_tabla )
+
+        llenar_tabla(True)
+
+
+
+# **********************************************************************************
+# ************************************  Almacen ************************************
+# **********************************************************************************
+
+class Almacen(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Almacen")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x600") 
+        self.resizable(False,False)
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))   
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        estilos_tablas()        
+        
+        self.tabla = ttk.Treeview(self, columns = ("Nombre", "Costo Usd", "Cantidad", "Categoria"))
+        self.tabla.column("#0", width = 100)
+        self.tabla.column("Nombre", width = 200)
+        self.tabla.column("Costo Usd", width = 100)
+        self.tabla.column("Cantidad", width = 100)
+        self.tabla.column("Categoria", width = 100)
+
+        self.tabla.place(x = 100, y = 100)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Codigo")
+        self.tabla.heading("Nombre", text = "Nombre")
+        self.tabla.heading("Costo Usd", text = "Costo Usd")
+        self.tabla.heading("Cantidad", text = "Cantidad")
+        self.tabla.heading("Categoria", text = "Categoria")
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set)
+
+        def llenar_tabla(event):
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "triplem",
+                password = "123456",
+                database = "triplem"
+                )
+            cursor = conn.cursor()
+
+            sql = f""" SELECT * FROM productos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%'; """
+            cursor.execute(sql)
+            for index in cursor:
+                self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],))         
+
+        # vamos a hacer un buscador 
+
+        self.label_buscador = CTkLabel(self,text="------------------------------ Buscador ------------------------------")
+        self.label_buscador.place(x=630,y=80)
+
+
+        self.texto_buscador_codigo = CTkEntry(self,placeholder_text="Buscar por codigo ...")
+        self.texto_buscador_codigo.place(x=610,y=120)          
+
+        self.texto_buscador_codigo.bind("<KeyRelease>", llenar_tabla) 
+
+        self.texto_buscador_nombre = CTkEntry(self,placeholder_text="Buscar por nombre ...")
+        self.texto_buscador_nombre.place(x=770,y=120) 
+
+        self.texto_buscador_nombre.bind("<KeyRelease>", llenar_tabla) 
+
+        def doble_click(event):
+            global codigo_almacen
+            global nombre_almacen
+            # vamos a capturar el codigo del producto
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                
+                codigo_almacen = self.tabla.item(item, "text") 
+                nombre_almacen = self.tabla.item(item, "values")[0]
+
+
+            # vamos a crear la ventana modal
+            temp = CTkToplevel()
+            temp.title("Selección") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 200
+            hventana = 200
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"200x200+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False)) 
+            temp.after(250, lambda: temp.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))  
+
+            def modificar():
+                root = CTkToplevel()
+                root.title("Modificar") 
+                htotal = root.winfo_screenheight()
+                wtotal = root.winfo_screenwidth()
+                wventana = 1000
+                hventana = 600
+                posx = round(wtotal/2-wventana/2)
+                posy = round(htotal/2-hventana/2)
+                root.geometry(f"+{posx}+{posy}")
+                root.geometry("1000x600") 
+                root.lift()
+                root.attributes('-topmost', True)
+                root.after(200, lambda: root.attributes('-topmost', False)) 
+                root.after(250, lambda: root.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
+
+                # ************************** Labels *************************        
+
+                root.label_codigo = CTkLabel(root,text="Codigo:", font=("Times New Roman",16))
+                root.label_codigo.place(x = 630, y = 70)   
+
+                root.texto_codigo = CTkEntry(root)
+                root.texto_codigo.place(x = 750, y = 70)     
+
+                root.label_nombre = CTkLabel(root,text="Nombre:", font=("Times New Roman",16))
+                root.label_nombre.place(x = 630, y = 110) 
+                
+                root.texto_nombre = CTkEntry(root)
+                root.texto_nombre.place(x = 750, y = 110)       
+
+                root.label_costo_usd = CTkLabel(root,text="Costo Lote Usd:", font=("Times New Roman",16))
+                root.label_costo_usd.place(x = 630, y = 150)  
+
+                root.texto_costo_usd = CTkEntry(root)
+                root.texto_costo_usd.place(x = 750, y = 150) 
+
+                def cambio():
+                    vent = CTkToplevel()
+                    vent.title("Cambio de Moneda") 
+                    htotal = vent.winfo_screenheight()
+                    wtotal = vent.winfo_screenwidth()
+                    wventana = 300
+                    hventana = 300
+                    posx = round(wtotal/2-wventana/2)
+                    posy = round(htotal/2-hventana/2)
+                    vent.geometry(f"+{posx}+{posy}")
+                    vent.lift()
+                    vent.attributes('-topmost', True)
+                    vent.after(200, lambda: vent.attributes('-topmost', False)) 
+                    vent.after(250, lambda: vent.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
+
+                    tar1 = 0           
+                    tar2 = 0           
+                    tar3 = 0 
+
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = """SELECT * FROM `tarifas`;"""
+                    cursor.execute(sql)
+                    for index in cursor:
+                        tar1 = index[0]
+                        tar2 = index[1]
+                        tar3 = index[2]
+
+                    tarifa = f"Tarifa:  1USD = {tar1}CUP,  1EUR = {tar2}CUP, 1EUR = {tar3}CUP"                      
+
+                    vent.label_tarifa = CTkLabel(vent,text=tarifa, font=("Times New Roman",16))
+                    vent.label_tarifa.pack(pady=10)
+
+                    vent.texto_cup = CTkEntry(vent, placeholder_text="CUP ...")
+                    vent.texto_cup.pack(pady=5)
+
+                    vent.texto_eur = CTkEntry(vent, placeholder_text="EUR ...")
+                    vent.texto_eur.pack(pady=5)
+
+                    def cambiar():
+                        if vent.texto_cup.get() == "" and vent.texto_eur.get() == "":
+                            error = messagebox.showerror("Error", "Debes escribir en algun campo la cantidad a cambiar")
+
+                        elif vent.texto_cup.get() != "" and vent.texto_eur.get() != "":
+                            error = messagebox.showerror("Error", "Debes escribir solo en un campo, no en ambos")
+
+                        else:
+                            if vent.texto_cup.get() != "":
+                                root.texto_costo_usd.delete(0,END)
+                                resultado = round(float(vent.texto_cup.get())/tar1,2)
+                                root.texto_costo_usd.insert(0,resultado)
+                                vent.destroy()
+
+                            else:
+                                root.texto_costo_usd.delete(0,END)
+                                resultado = round(float(vent.texto_eur.get())*tar3,2)
+                                root.texto_costo_usd.insert(0,resultado)
+                                vent.destroy()
+
+
+                    vent.btn_cambiar = CTkButton(vent, text="Cambiar", command=cambiar)
+                    vent.btn_cambiar.pack(pady=10)           
+
+                root.btn_cambio = CTkButton(root,text="...", width=30,command=cambio)      
+                root.btn_cambio.place(x = 900, y = 150)  
+
+                root.label_cantidad = CTkLabel(root,text="Cantidad:", font=("Times New Roman",16))
+                root.label_cantidad.place(x = 630, y = 190)  
+
+                root.texto_cantidad = CTkEntry(root)
+                root.texto_cantidad.place(x = 750, y = 190)                 
+
+                root.label_categoria = CTkLabel(root,text="Categoria:", font=("Times New Roman",16))
+                root.label_categoria.place(x = 630, y = 230)  
+
+                categorias = []
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "triplem",
+                    password = "123456",
+                    database = "triplem"
+                    )
+                cursor = conn.cursor()
+
+                sql = """SELECT * FROM `categorias`;"""
+                cursor.execute(sql)
+                for index in cursor:
+                    categorias.append(index[0])
+
+                root.texto_categoria = CTkComboBox(root, values=categorias)
+                root.texto_categoria.set("...")
+                root.texto_categoria.place(x = 750, y = 230)
+
+                # vamos a llenar los campos con la info que ya existe en la base de datos
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "triplem",
+                    password = "123456",
+                    database = "triplem"
+                    )
+                cursor = conn.cursor()
+
+                sql = f""" SELECT * FROM `productos` WHERE `Codigo` = "{codigo_almacen}" """
+                cursor.execute(sql)
+                for index in cursor:
+                    root.texto_codigo.insert(0,index[0])                     
+                    root.texto_nombre.insert(0,index[1]) 
+                    root.texto_costo_usd.insert(0,index[2]*index[3])
+                    root.texto_cantidad.insert(0,index[3])                    
+                    root.texto_categoria.set(index[4])
+
+
+                def modificar_producto():
+                    try:
+                        conf = messagebox.askokcancel("Confirmar","Vamos a modificar el producto en la base de datos")
+                        if conf:
+                            # modificar el producto en la bd 
+                            conn = mysql.connector.connect(
+                                host = "localhost",
+                                user = "triplem",
+                                password = "123456",
+                                database = "triplem"
+                                )
+                            cursor = conn.cursor()                    
+
+                            sql = f""" UPDATE `productos` SET `Codigo`='{root.texto_codigo.get()}',`Nombre`='{root.texto_nombre.get()}',`CostoUsd`='{float(root.texto_costo_usd.get())/float(root.texto_cantidad.get())}',`Cantidad`='{root.texto_cantidad.get()}',`Categoria`='{root.texto_categoria.get()}' WHERE `Codigo` = "{codigo_almacen}"; """
+                            cursor.execute(sql)
+                            conn.commit()
+
+                            completado = messagebox.showinfo("Completado","Se modifico el producto")
+
+                            llenar_tabla(True)
+                            root.destroy()
+
+                    except:
+                        error = messagebox.showerror("Error","No se ha podido modificar el producto")
+
+                root.btn_modificar = CTkButton(root,text="Modificar",command=modificar_producto, width = 150, height = 40)
+                root.btn_modificar.place(x=650 ,y=500 )
+
+            temp.btn_modificar = CTkButton(temp,text="Modificar", command=modificar)
+            temp.btn_modificar.pack(pady=20)   
+
+            def eliminar():
+                string = f"Vamos a eliminar el producto: {nombre_almacen}"
+                conf = messagebox.askokcancel("Confirmar",string)
+                if conf:
+                    try:
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "triplem",
+                            password = "123456",
+                            database = "triplem"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = f""" DELETE FROM `productos` WHERE `Codigo` = "{codigo_almacen}" """
+                        cursor.execute(sql)
+                        conn.commit()
+                    
+                    except:
+                        error = messagebox.showerror("Error","No se pudo eliminar el producto")
+
+            temp.btn_eliminar = CTkButton(temp,text="Eliminar", command=eliminar)
+            temp.btn_eliminar.pack(pady=20) 
+
+
+
+        self.tabla.bind("<Double-1>", doble_click)  
+
+        llenar_tabla(True)
+
+
+
+
+# **********************************************************************************
+# **********************************  Asociados ************************************
+# **********************************************************************************
+
+class Asociados(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Gastos Asociados")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x600") 
+        self.resizable(False,False)
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))   
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False)) 
+
+        estilos_tablas()        
+        
+        self.tabla = ttk.Treeview(self, columns = ("Fecha","Concepto", "Monto"), show="headings")
+        self.tabla.column("#0", width = 100, anchor="center")
+        self.tabla.column("Fecha", width = 100, anchor="center")
+        self.tabla.column("Concepto", width = 500, anchor="center")
+        self.tabla.column("Monto", width = 100, anchor="center")        
+
+        self.tabla.place(x = 300, y = 100)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Id", anchor="center")
+        self.tabla.heading("Fecha", text = "Fecha", anchor="center")
+        self.tabla.heading("Concepto", text = "Concepto", anchor="center")
+        self.tabla.heading("Monto", text = "Monto", anchor="center")        
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set) 
+
+        def llenar_tabla():
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "triplem",
+                password = "123456",
+                database = "triplem"
+                )
+            cursor = conn.cursor()
+
+            sql = f""" SELECT * FROM `asociados` WHERE `Fecha` = "{fecha_actual}"; """
+            cursor.execute(sql)
+            for index in cursor:
+                self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],))
+
+        llenar_tabla()        
+
+        def agregar():
+            temp = CTkToplevel()
+            temp.title("Agregar") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False))  
+            temp.after(250, lambda: temp.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
+
+            temp.texto_concepto = CTkEntry(temp, placeholder_text="Concepto ...",width=300)
+            temp.texto_concepto.pack(pady = 5)
+
+            temp.texto_monto = CTkEntry(temp, placeholder_text="Monto ...",width=300)
+            temp.texto_monto.pack(pady = 5)
+
+            def aceptar_asociado():
+                try:
+                    conf = messagebox.askokcancel("Confirmar","Se va a agregar el gasto")
+                    if conf:
+                        # primero encontrar el id que le vamos a dar al gasto asociado
+                        id_asociado = 1
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "triplem",
+                            password = "123456",
+                            database = "triplem"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = """SELECT MAX(Id) FROM `asociados`;"""
+                        cursor.execute(sql)
+                        for index in cursor:
+                            if index[0] == None:
+                                pass
+
+                            else:
+                                id_asociado = index[0] + 1  
+
+
+                        # agregar el gasto asociado a la bd
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "triplem",
+                            password = "123456",
+                            database = "triplem"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = f""" INSERT INTO `asociados`(`Id`, `Fecha`, `Concepto`, `Monto`) VALUES ('{id_asociado}','{fecha_actual}','{temp.texto_concepto.get()}','{temp.texto_monto.get()}') """
+                        cursor.execute(sql)
+                        conn.commit()
+
+                        llenar_tabla()
+                        temp.destroy()
+
+                except:
+                    error = messagebox.showerror("Error","No se pudo agregar el gasto asociado")
+
+            temp.btn = CTkButton(temp, text="Aceptar Asociado", command=aceptar_asociado)
+            temp.btn.pack(pady = 10)  
+
+        self.btn_agregar = CTkButton(self, text = "Agregar", command = agregar, width = 500, height = 50)
+        self.btn_agregar.place(x = 270, y = 400)       
+
+
+
+
+
+# **********************************************************************************
+# **********************************  Salarios *************************************
+# **********************************************************************************
+
+class Salarios(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Gastos Salarios")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x600") 
+        self.resizable(False,False)
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))   
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False)) 
+
+        estilos_tablas()   
+
+        self.tabla = ttk.Treeview(self, columns = ("Fecha","Concepto", "Monto"), show="headings")
+        self.tabla.column("#0", width = 100, anchor="center")
+        self.tabla.column("Fecha", width = 100, anchor="center")
+        self.tabla.column("Concepto", width = 500, anchor="center")
+        self.tabla.column("Monto", width = 100, anchor="center")        
+
+        self.tabla.place(x = 300, y = 100)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Id", anchor="center")
+        self.tabla.heading("Fecha", text = "Fecha", anchor="center")
+        self.tabla.heading("Concepto", text = "Concepto", anchor="center")
+        self.tabla.heading("Monto", text = "Monto", anchor="center")        
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set) 
+
+        def llenar_tabla():
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "triplem",
+                password = "123456",
+                database = "triplem"
+                )
+            cursor = conn.cursor()
+
+            sql = f""" SELECT * FROM `salarios` WHERE `Fecha` = "{fecha_actual}"; """
+            cursor.execute(sql)
+            for index in cursor:
+                self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],))
+
+        llenar_tabla()
+
+        def agregar():
+            temp = CTkToplevel()
+            temp.title("Agregar") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False))  
+            temp.after(250, lambda: temp.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')) 
+
+            trabajadores = []
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "triplem",
+                password = "123456",
+                database = "triplem"
+                )
+            cursor = conn.cursor()
+
+            sql = f""" SELECT * FROM `trabajadores` """
+            cursor.execute(sql)
+            for index in cursor:
+                trabajadores.append(index[0])
+
+            temp.texto_trabajador = CTkComboBox(temp, values=trabajadores,width=300)
+            temp.texto_trabajador.set("Escoge Trabajador ...")
+            temp.texto_trabajador.pack(pady = 5)
+
+            temp.texto_monto = CTkEntry(temp, placeholder_text="Monto ...",width=300)
+            temp.texto_monto.pack(pady = 5)
+
+            def aceptar_salario():
+                try:
+                    conf = messagebox.askokcancel("Confirmar","Se va a agregar el gasto")
+                    if conf:
+                        # primero encontrar el id que le vamos a dar al gasto asociado
+                        id_salario = 1
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "triplem",
+                            password = "123456",
+                            database = "triplem"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = """SELECT MAX(Id) FROM `salarios`;"""
+                        cursor.execute(sql)
+                        for index in cursor:
+                            if index[0] == None:
+                                pass
+
+                            else:
+                                id_salario = index[0] + 1  
+
+
+                        # agregar el gasto asociado a la bd
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "triplem",
+                            password = "123456",
+                            database = "triplem"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = f""" INSERT INTO `salarios`(`Id`, `Fecha`, `Concepto`, `Monto`) VALUES ('{id_salario}','{fecha_actual}','{temp.texto_trabajador.get()}','{temp.texto_monto.get()}') """
+                        cursor.execute(sql)
+                        conn.commit()
+
+                        llenar_tabla()
+                        temp.destroy()
+
+                except:
+                    error = messagebox.showerror("Error","No se pudo agregar el salario")
+
+            temp.btn = CTkButton(temp, text="Aceptar Salario", command=aceptar_salario)
+            temp.btn.pack(pady = 10)
+
+        self.btn_agregar = CTkButton(self, text = "Agregar", command = agregar, width = 500, height = 50)
+        self.btn_agregar.place(x = 270, y = 400)     
+
 
 
 
