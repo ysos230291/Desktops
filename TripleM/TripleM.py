@@ -824,6 +824,15 @@ class Lobby(CTkToplevel):
         def almacen_lobby():
             alm = Almacen()
 
+        def control_salarios_lobby():
+            cs = ConsultaSalarios()
+
+        def control_asociados_lobby():
+            ca = ConsultaAsociados()
+
+        def consulta_totales_lobby():
+            cons = ConsultaTotales()
+
         def salarios_lobby():
             sal = Salarios()
 
@@ -907,7 +916,10 @@ class Lobby(CTkToplevel):
         gastos_menu.add_command(label="Salarios", command = salarios_lobby) 
 
         consultas_menu = Menu(self.menu, tearoff = 0)   
+        consultas_menu.add_command(label="Totales", command = consulta_totales_lobby)        
         consultas_menu.add_command(label="Almacen", command = almacen_lobby)        
+        consultas_menu.add_command(label="Salarios", command = control_salarios_lobby)        
+        consultas_menu.add_command(label="Asociados", command = control_asociados_lobby)        
         
         entradas_menu = Menu(self.menu, tearoff = 0)
         entradas_menu.add_command(label="Nuevo Producto", command = nuevo_producto_lobby)                     
@@ -3756,7 +3768,753 @@ class Salarios(CTkToplevel):
             temp.btn.pack(pady = 10)
 
         self.btn_agregar = CTkButton(self, text = "Agregar", command = agregar, width = 500, height = 50)
-        self.btn_agregar.place(x = 270, y = 400)     
+        self.btn_agregar.place(x = 270, y = 400) 
+
+
+
+# **********************************************************************************
+# *****************************  Consulta Salarios **********************************
+# **********************************************************************************
+
+class ConsultaSalarios(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Consulta Salarios")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x600") 
+        self.resizable(False,False)
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))   
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        estilos_tablas() 
+
+        self.tabla = ttk.Treeview(self, columns = ("Fecha","Concepto", "Monto"), show="headings")
+        self.tabla.column("#0", width = 100, anchor="center")
+        self.tabla.column("Fecha", width = 100, anchor="center")
+        self.tabla.column("Concepto", width = 500, anchor="center")
+        self.tabla.column("Monto", width = 100, anchor="center")        
+
+        self.tabla.place(x = 50, y = 100)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Id", anchor="center")
+        self.tabla.heading("Fecha", text = "Fecha", anchor="center")
+        self.tabla.heading("Concepto", text = "Concepto", anchor="center")
+        self.tabla.heading("Monto", text = "Monto", anchor="center")
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set)
+
+        def escoger_concepto(event): 
+            global concepto_salario
+
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                    
+                concepto_salario = self.tabla.item(item, "values")[1] 
+
+            self.texto_buscador_nombre.delete(0,END)
+            self.texto_buscador_nombre.insert(0,concepto_salario)
+
+            llenar_tabla(True)
+
+        self.tabla.bind("<Double-1>", escoger_concepto)
+
+
+        def llenar_tabla(event):
+            try:
+                self.tabla.delete(*self.tabla.get_children())
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "triplem",
+                    password = "123456",
+                    database = "triplem"
+                    )
+                cursor = conn.cursor()
+
+                if self.texto_fecha_inicial.get() == "" or self.texto_fecha_final.get() == "":
+                    sql = f""" SELECT * FROM salarios WHERE `Concepto` LIKE '%{self.texto_buscador_nombre.get()}%' """
+
+                else:
+                    sql = f""" SELECT * FROM salarios WHERE `Concepto` LIKE '%{self.texto_buscador_nombre.get()}%' and `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+
+                cursor.execute(sql)
+                for index in cursor:
+                    self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],))  
+            except:
+                error = messagebox.showerror("Error","No se pudo actualizar la tabla")
+
+        self.label_fechas = CTkLabel(self,text="---------- Control de fechas ----------")
+        self.label_fechas.place(x=750,y=80) 
+
+        self.texto_fecha_inicial = CTkEntry(self,placeholder_text="Fecha inicial ...")
+        self.texto_fecha_inicial.place(x=750,y=120) 
+
+        def fecha_inicial():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_inicial.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_inicial.insert(0,str(fecha_select)) 
+                llenar_tabla(True)
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack() 
+
+
+        self.btn_fecha_inicial = CTkButton(self,text="...",command=fecha_inicial, width = 27, height = 27)
+        self.btn_fecha_inicial.place(x=900 ,y=120 )
+
+        self.texto_fecha_final = CTkEntry(self,placeholder_text="Fecha final ...")
+        self.texto_fecha_final.place(x=750,y=160) 
+
+        def fecha_final():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_final.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_final.insert(0,str(fecha_select)) 
+                llenar_tabla(True)
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack()
+
+
+        self.btn_fecha_final = CTkButton(self,text="...",command=fecha_final, width = 27, height = 27)
+        self.btn_fecha_final.place(x=900 ,y=160 )
+
+        self.label_buscador = CTkLabel(self,text="---------- Buscador ----------")
+        self.label_buscador.place(x=750,y=220)        
+
+        self.texto_buscador_nombre = CTkEntry(self,placeholder_text="Buscar por Concepto ...")
+        self.texto_buscador_nombre.place(x=750,y=260) 
+
+        self.texto_buscador_nombre.bind("<KeyRelease>", llenar_tabla )  
+
+        llenar_tabla(True)
+
+
+
+
+# **********************************************************************************
+# *****************************  Consulta Asociados ********************************
+# **********************************************************************************
+
+class ConsultaAsociados(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Consulta Asociados")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x600") 
+        self.resizable(False,False)
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))   
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        estilos_tablas() 
+
+        self.tabla = ttk.Treeview(self, columns = ("Fecha","Concepto", "Monto"), show="headings")
+        self.tabla.column("#0", width = 100, anchor="center")
+        self.tabla.column("Fecha", width = 100, anchor="center")
+        self.tabla.column("Concepto", width = 500, anchor="center")
+        self.tabla.column("Monto", width = 100, anchor="center")        
+
+        self.tabla.place(x = 50, y = 100)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Id", anchor="center")
+        self.tabla.heading("Fecha", text = "Fecha", anchor="center")
+        self.tabla.heading("Concepto", text = "Concepto", anchor="center")
+        self.tabla.heading("Monto", text = "Monto", anchor="center")
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set)
+
+        def escoger_concepto(event): 
+            global concepto_asociado
+
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                    
+                concepto_asociado = self.tabla.item(item, "values")[1] 
+
+            self.texto_buscador_nombre.delete(0,END)
+            self.texto_buscador_nombre.insert(0,concepto_asociado)
+
+            llenar_tabla(True)
+
+        self.tabla.bind("<Double-1>", escoger_concepto)
+
+
+        def llenar_tabla(event):
+            try:
+                self.tabla.delete(*self.tabla.get_children())
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "triplem",
+                    password = "123456",
+                    database = "triplem"
+                    )
+                cursor = conn.cursor()
+
+                if self.texto_fecha_inicial.get() == "" or self.texto_fecha_final.get() == "":
+                    sql = f""" SELECT * FROM asociados WHERE `Concepto` LIKE '%{self.texto_buscador_nombre.get()}%' """
+
+                else:
+                    sql = f""" SELECT * FROM asociados WHERE `Concepto` LIKE '%{self.texto_buscador_nombre.get()}%' and `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+
+                cursor.execute(sql)
+                for index in cursor:
+                    self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],))  
+            except:
+                error = messagebox.showerror("Error","No se pudo actualizar la tabla")
+
+        self.label_fechas = CTkLabel(self,text="---------- Control de fechas ----------")
+        self.label_fechas.place(x=750,y=80) 
+
+        self.texto_fecha_inicial = CTkEntry(self,placeholder_text="Fecha inicial ...")
+        self.texto_fecha_inicial.place(x=750,y=120) 
+
+        def fecha_inicial():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_inicial.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_inicial.insert(0,str(fecha_select)) 
+                llenar_tabla(True)
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack() 
+
+
+        self.btn_fecha_inicial = CTkButton(self,text="...",command=fecha_inicial, width = 27, height = 27)
+        self.btn_fecha_inicial.place(x=900 ,y=120 )
+
+        self.texto_fecha_final = CTkEntry(self,placeholder_text="Fecha final ...")
+        self.texto_fecha_final.place(x=750,y=160) 
+
+        def fecha_final():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_final.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_final.insert(0,str(fecha_select)) 
+                llenar_tabla(True)
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack()
+
+
+        self.btn_fecha_final = CTkButton(self,text="...",command=fecha_final, width = 27, height = 27)
+        self.btn_fecha_final.place(x=900 ,y=160 )
+
+        self.label_buscador = CTkLabel(self,text="---------- Buscador ----------")
+        self.label_buscador.place(x=750,y=220)        
+
+        self.texto_buscador_nombre = CTkEntry(self,placeholder_text="Buscar por Concepto ...")
+        self.texto_buscador_nombre.place(x=750,y=260) 
+
+        self.texto_buscador_nombre.bind("<KeyRelease>", llenar_tabla )  
+
+        llenar_tabla(True)
+
+
+
+
+# **********************************************************************************
+# ****************************  Consulta Totales ***********************************
+# **********************************************************************************
+
+class ConsultaTotales(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Consulta Totales")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x600") 
+        self.resizable(False,False)
+        self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))   
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))         
+
+        self.label_informaciones = CTkLabel(self, text="---------- Informaciones ----------")
+        self.label_informaciones.place(x=500,y=60)
+
+        self.label_ingresos = CTkLabel(self, text="Total Ingresos: ")
+        self.label_ingresos.place(x=500,y=100)
+
+        string_ingresos = StringVar()
+        string_ingresos.set("0")
+
+        self.label_ingresos2 = CTkLabel(self, textvariable=string_ingresos)
+        self.label_ingresos2.place(x=700,y=100)
+
+        self.label_mayorista = CTkLabel(self, text="Total Mayorista: ")
+        self.label_mayorista.place(x=500,y=140)
+
+        string_mayorista = StringVar()
+        string_mayorista.set("0")
+
+        self.label_mayorista2 = CTkLabel(self, textvariable=string_mayorista)
+        self.label_mayorista2.place(x=700,y=140)
+
+        self.label_minorista = CTkLabel(self, text="Total Minorista: ")
+        self.label_minorista.place(x=500,y=180)
+
+        string_minorista = StringVar()
+        string_minorista.set("0")
+
+        self.label_minorista2 = CTkLabel(self, textvariable=string_minorista)
+        self.label_minorista2.place(x=700,y=180)
+
+        self.label_gastos = CTkLabel(self, text="Total Gastos Asociados: ")
+        self.label_gastos.place(x=500,y=220)
+
+        string_gastos = StringVar()
+        string_gastos.set("0")
+
+        self.label_gastos2 = CTkLabel(self, textvariable=string_gastos)
+        self.label_gastos2.place(x=700,y=220)
+
+        self.label_salarios = CTkLabel(self, text="Total Salarios: ")
+        self.label_salarios.place(x=500,y=260)
+
+        string_salarios = StringVar()
+        string_salarios.set("0")
+
+        self.label_salarios2 = CTkLabel(self, textvariable=string_salarios)
+        self.label_salarios2.place(x=700,y=260)
+
+        self.label_costos = CTkLabel(self, text="Total Costos: ")
+        self.label_costos.place(x=500,y=300)
+
+        string_costos = StringVar()
+        string_costos.set("0")
+
+        self.label_costos2 = CTkLabel(self, textvariable=string_costos)
+        self.label_costos2.place(x=700,y=300)
+
+        self.label_ganancia = CTkLabel(self, text="Total Ganancias: ")
+        self.label_ganancia.place(x=500,y=340)
+
+        string_ganancia = StringVar()
+        string_ganancia.set("0")
+
+        self.label_ganancia2 = CTkLabel(self, textvariable=string_ganancia)
+        self.label_ganancia2.place(x=700,y=340)
+
+        self.label_mas_vende = CTkLabel(self, text="Producto Mas Vendido: ")
+        self.label_mas_vende.place(x=500,y=380)
+
+        string_mas_vende = StringVar()
+        string_mas_vende.set("0")
+
+        self.label_mas_vende2 = CTkLabel(self, textvariable=string_mas_vende)
+        self.label_mas_vende2.place(x=700,y=380)
+
+        self.label_menos_vende = CTkLabel(self, text="Producto Menos Vendido: ")
+        self.label_menos_vende.place(x=500,y=420)
+
+        string_menos_vende = StringVar()
+        string_menos_vende.set("0")
+
+        self.label_menos_vende2 = CTkLabel(self, textvariable=string_menos_vende)
+        self.label_menos_vende2.place(x=700,y=420)
+
+        self.label_mas_ganancia = CTkLabel(self, text="Producto Mas Ganancia: ")
+        self.label_mas_ganancia.place(x=500,y=460)
+
+        string_mas_ganancia = StringVar()
+        string_mas_ganancia.set("0")
+
+        self.label_mas_ganancia2 = CTkLabel(self, textvariable=string_mas_ganancia)
+        self.label_mas_ganancia2.place(x=700,y=460)
+
+        self.label_menos_ganancia = CTkLabel(self, text="Producto Menos Ganancia: ")
+        self.label_menos_ganancia.place(x=500,y=500)
+
+        string_menos_ganancia = StringVar()
+        string_menos_ganancia.set("0")
+
+        self.label_menos_ganancia2 = CTkLabel(self, textvariable=string_menos_ganancia)
+        self.label_menos_ganancia2.place(x=700,y=500)
+
+        # ahora vamos a generar la funcion para mostrar los datos 
+        def consulta():
+            if self.texto_fecha_final.get() == "" or self.texto_fecha_inicial.get() == "":
+                pass
+
+            else:
+                try:
+                    # primero vamos a hallar el total de ingresos
+                    ingresos = 0
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()                    
+                    sql = f""" SELECT  `Precio` FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        ingresos += index[0]
+
+                    string_ingresos.set(round(ingresos,2))
+                    ####################################################
+
+                    # ahora el total mayorista
+                    mayorista = 0
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()                    
+                    sql = f""" SELECT  `Precio` FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" and `Tipo` = "Mayorista" """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        mayorista += index[0]
+
+                    string_mayorista.set(round(mayorista,2))
+                    ####################################################
+
+                    # ahora el total minorista
+                    minorista = 0
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()                    
+                    sql = f""" SELECT  `Precio` FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" and `Tipo` = "Minorista" """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        minorista += index[0]
+
+                    string_minorista.set(round(minorista,2))
+
+                    ####################################################
+
+                    # ahora veremos total de gastos asociados 
+                    asociados = 0
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()                    
+                    sql = f""" SELECT `Monto` FROM `asociados` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        asociados += index[0]
+
+                    string_gastos.set(round(asociados,2))
+                    ####################################################
+
+                    # ahora veamos los gastos de los salarios
+                    salarios = 0
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()                    
+                    sql = f""" SELECT `Monto` FROM `salarios` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        salarios += index[0]
+
+                    string_salarios.set(round(salarios,2))
+                    ####################################################
+
+                    # ahora veamos el total de costos 
+                    costos_usd = 0
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()                    
+                    sql = f""" SELECT  `CostoUsd`, `Cantidad` FROM `entradas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        costos_usd += index[0]*index[1]
+
+                    # ahora hay que convertirlo a cup 
+                    tarifa = 0
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()                    
+                    sql = f""" SELECT `USD` FROM `tarifas` """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        tarifa = index[0]                    
+
+                    string_costos.set(round(costos_usd*tarifa, 2))
+                    ########################################################
+
+                    # ahora veamos las ganancias 
+                    ganancias = ingresos - asociados - salarios - costos_usd*tarifa
+                    string_ganancia.set(round(ganancias, 2))
+
+                    ########################################################
+
+                    # ahora el producto mas vendido 
+                    nombre = ""
+                    cantidad = 0
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()                    
+                    sql = f""" SELECT Codigo, Nombre, SUM(Cantidad) AS total_unidades_vendidas FROM salidas WHERE Fecha BETWEEN "{self.texto_fecha_inicial.get()}" AND "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY total_unidades_vendidas DESC LIMIT 1; """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        nombre = index[1]
+                        cantidad = index[2]
+
+                    string = f" ({round(cantidad, 2)})"
+                    string_mas_vende.set(nombre + string)
+                    ##########################################################
+
+                    # ahora el menos vendido
+                    nombre = ""
+                    cantidad = 0
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()                    
+                    sql = f""" SELECT Codigo, Nombre, SUM(Cantidad) AS total_unidades_vendidas FROM salidas WHERE Fecha BETWEEN "{self.texto_fecha_inicial.get()}" AND "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY total_unidades_vendidas ASC LIMIT 1; """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        nombre = index[1]
+                        cantidad = index[2]
+
+                    string = f" ({round(cantidad, 2)})"
+                    string_menos_vende.set(nombre + string)
+
+                    ########################################################################
+
+                    # ahora el producto que mas ganancia genera 
+                    nombre = ""
+                    ganancia = 0
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()                    
+                    sql = f""" SELECT Codigo, Nombre, SUM((Precio - CostoCup) * Cantidad) AS ganancia_total FROM salidas WHERE Fecha BETWEEN "{self.texto_fecha_inicial.get()}" AND "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY ganancia_total DESC LIMIT 1; """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        nombre = index[1]
+                        ganancia = index[2]
+
+                    string = f" ({round(ganancia, 2)})"
+                    string_mas_ganancia.set(nombre + string)
+
+                    ###############################################################
+
+                    # ahora el que menos ganancia genera 
+                    nombre = ""
+                    ganancia = 0
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "triplem",
+                        password = "123456",
+                        database = "triplem"
+                        )
+                    cursor = conn.cursor()                    
+                    sql = f""" SELECT Codigo, Nombre, SUM((Precio - CostoCup) * Cantidad) AS ganancia_total FROM salidas WHERE Fecha BETWEEN "{self.texto_fecha_inicial.get()}" AND "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY ganancia_total ASC LIMIT 1; """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        nombre = index[1]
+                        ganancia = index[2]
+
+                    string = f" ({round(ganancia, 2)})"
+                    string_menos_ganancia.set(nombre + string)
+
+                    ############################################################
+
+                except:
+                    error = messagebox.showerror("Error","No se ha podido mostrar todos los datos \n Revise la informacion escrita en los campos de las fechas")
+
+        self.label_fechas = CTkLabel(self,text="---------- Control de fechas ----------")
+        self.label_fechas.place(x=50,y=50) 
+
+        self.texto_fecha_inicial = CTkEntry(self,placeholder_text="Fecha inicial ...")
+        self.texto_fecha_inicial.place(x=50,y=90) 
+
+        def fecha_inicial():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_inicial.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_inicial.insert(0,str(fecha_select))  
+                consulta()               
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack() 
+
+
+        self.btn_fecha_inicial = CTkButton(self,text="...",command=fecha_inicial, width = 27, height = 27)
+        self.btn_fecha_inicial.place(x=200 ,y=90 )
+
+        self.texto_fecha_final = CTkEntry(self,placeholder_text="Fecha final ...")
+        self.texto_fecha_final.place(x=50,y=130) 
+
+        def fecha_final():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_final.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_final.insert(0,str(fecha_select))  
+                consulta()               
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack()
+
+
+        self.btn_fecha_final = CTkButton(self,text="...",command=fecha_final, width = 27, height = 27)
+        self.btn_fecha_final.place(x=200 ,y=130 )
+
 
 
 
