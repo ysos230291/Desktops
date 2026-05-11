@@ -220,7 +220,7 @@ conn = mysql.connector.connect(
 cursor = conn.cursor()
 
 try:
-    sql = """CREATE TABLE `lilly`.`productos` (`Codigo` VARCHAR(50) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL,`Precio` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Categoria` VARCHAR(50) NOT NULL  ) ENGINE = InnoDB; """
+    sql = """CREATE TABLE `lilly`.`productos` (`Codigo` VARCHAR(50) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL,`Precio` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Categoria` VARCHAR(50) NOT NULL, `Minimo` INT NOT NULL ) ENGINE = InnoDB; """
     cursor.execute(sql)
     conn.commit()
 except:
@@ -355,7 +355,14 @@ class Autenticacion(CTk):
         self.geometry(f"+{posx}+{posy}")
         self.geometry("400x200")
         self.resizable(False,False)            
-        self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico')        
+        self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico')  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo1.jpg"), size = (400,200))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)        
 
         ################# textos y entradas ##################
 
@@ -497,7 +504,16 @@ class NuevaLicencia(CTkToplevel):
         self.resizable(False,False)
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))        
+        self.after(200, lambda: self.attributes('-topmost', False))
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo1.jpg"), size = (300,200))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################         
 
         self.label = CTkLabel(self, text = "Introduzca la licencia nueva", font=("Times New Roman",14))
         self.label.place(x = 60 , y = 20)        
@@ -639,7 +655,16 @@ class Lobby(CTkToplevel):
         posy = round(htotal/2-hventana/2)
         self.geometry(f"+{posx}+{posy}")
         self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))
-        self.resizable(False,False)          
+        self.resizable(False,False)   
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo3.jpg"), size = (1300,700))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################          
         
         firma = "Vence (" + str(fecha_vencimiento) + ")"
         self.label_lilly = CTkLabel(self, text = firma, font=("Times New Roman",16))
@@ -884,6 +909,9 @@ class Lobby(CTkToplevel):
         def tarifas_lobby():
             pr = Tarifas()
 
+        def deficit_lobby():
+            de = Deficit()
+
         def salva_lobby():            
             # Crear carpeta de respaldos si no existe
             carpeta_respaldo = "D:/lilly/respaldos"
@@ -950,6 +978,7 @@ class Lobby(CTkToplevel):
         consultas_menu.add_command(label="Almacen", command = almacen_lobby)        
         consultas_menu.add_command(label="Salarios", command = control_salarios_lobby)        
         consultas_menu.add_command(label="Asociados", command = control_asociados_lobby)        
+        consultas_menu.add_command(label="Deficit", command = deficit_lobby)        
         
         entradas_menu = Menu(self.menu, tearoff = 0)
         entradas_menu.add_command(label="Nuevo Producto", command = nuevo_producto_lobby)                     
@@ -1003,7 +1032,16 @@ class UsuarioAgregar(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))  
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))        
+        self.after(200, lambda: self.attributes('-topmost', False))    
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo5.jpg"), size = (400,300))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################       
 
         # *********************** Label ****************************************
 
@@ -1085,7 +1123,16 @@ class EliminarUsuario(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))  
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))           
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo5.jpg"), size = (400,300))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################            
         
         items_usuarios = []
 
@@ -1184,14 +1231,23 @@ class Trabajadores(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))          
+        self.after(200, lambda: self.attributes('-topmost', False))     
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo.jpg"), size = (800,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################        
 
         estilos_tablas()  
 
         self.tabla = ttk.Treeview(self, columns = ())
         self.tabla.column("#0", width = 500)
 
-        self.tabla.place(x = 200, y = 100)        
+        self.tabla.place(x = 100, y = 50)        
         self.tabla.config(height = 10)
 
         self.tabla.heading("#0", text = "Trabajadores")
@@ -1345,14 +1401,23 @@ class Categorias(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))            
+        self.after(200, lambda: self.attributes('-topmost', False))      
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo.jpg"), size = (800,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################         
 
         estilos_tablas()        
         
         self.tabla = ttk.Treeview(self, columns = ())
         self.tabla.column("#0", width = 500)
 
-        self.tabla.place(x = 200, y = 100)        
+        self.tabla.place(x = 100, y = 50)        
         self.tabla.config(height = 10)
 
         self.tabla.heading("#0", text = "Categorias")
@@ -1506,7 +1571,16 @@ class Tarifas(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))         
+        self.after(200, lambda: self.attributes('-topmost', False))    
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo.jpg"), size = (300,300))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################        
 
         self.label_usd = CTkLabel(self,text="USD: ")   
         self.label_usd.place(x=30,y=30)   
@@ -1630,7 +1704,16 @@ class NuevoProducto(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))   
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))        
+        self.after(200, lambda: self.attributes('-topmost', False)) 
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo2.jpg"), size = (600,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################          
 
         # ************************** Labels *************************   
          
@@ -1655,7 +1738,7 @@ class NuevoProducto(CTkToplevel):
                 ultimo_id.set(index[0])
 
             label_ultimo_id = CTkLabel(self, textvariable = ultimo_id)
-            label_ultimo_id.place(x = 550, y = 70) 
+            label_ultimo_id.place(x = 630, y = 30) 
 
         actualizar_id()
 
@@ -1780,9 +1863,13 @@ class NuevoProducto(CTkToplevel):
 
         self.texto_categoria = CTkComboBox(self, values=categorias)
         self.texto_categoria.set("...")
-        self.texto_categoria.place(x = 750, y = 270)         
+        self.texto_categoria.place(x = 750, y = 270)  
 
+        self.label_minimo = CTkLabel(self,text="Minimo:", font=("Times New Roman",16))
+        self.label_minimo.place(x = 630, y = 310) 
 
+        self.texto_minimo = CTkEntry(self)        
+        self.texto_minimo.place(x = 750, y = 310) 
 
         def agregar_producto():
             try:
@@ -1819,7 +1906,7 @@ class NuevoProducto(CTkToplevel):
 
                                         
 
-                        sql = f""" INSERT INTO `productos`(`Codigo`, `Nombre`, `CostoUsd`, `Precio`, `Cantidad`, `Categoria`) VALUES ('{self.texto_codigo.get()}','{self.texto_nombre.get()}','{float(self.texto_costo_usd.get())/float(self.texto_cantidad.get())}','{self.texto_precio.get()}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}')  """
+                        sql = f""" INSERT INTO `productos`(`Codigo`, `Nombre`, `CostoUsd`, `Precio`, `Cantidad`, `Categoria`, `Minimo`) VALUES ('{self.texto_codigo.get()}','{self.texto_nombre.get()}','{float(self.texto_costo_usd.get())/float(self.texto_cantidad.get())}','{self.texto_precio.get()}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}','{self.texto_minimo.get()}')  """
                         cursor.execute(sql)
                         conn.commit()
 
@@ -1862,6 +1949,7 @@ class NuevoProducto(CTkToplevel):
                         self.texto_precio.delete(0,END)
                         self.texto_cantidad.delete(0,END)                        
                         self.texto_categoria.set("...")
+                        self.texto_minimo.delete(0,END)
                         actualizar_id()
         
             except:
@@ -1870,7 +1958,7 @@ class NuevoProducto(CTkToplevel):
         
 
         self.btn_aceptar = CTkButton(self,text="Aceptar",command=agregar_producto, width = 300, height = 40)
-        self.btn_aceptar.place(x=600 ,y=500 )
+        self.btn_aceptar.place(x=650 ,y=500 )
 
 
 
@@ -1897,6 +1985,15 @@ class Reabastecer(CTkToplevel):
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))  
 
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo4.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################   
+
         estilos_tablas()        
         
         self.tabla = ttk.Treeview(self, columns = ("Nombre", "Costo Usd", "Precio", "Cantidad", "Categoria"))
@@ -1907,7 +2004,7 @@ class Reabastecer(CTkToplevel):
         self.tabla.column("Cantidad", width = 100)
         self.tabla.column("Categoria", width = 100)
 
-        self.tabla.place(x = 50, y = 100)        
+        self.tabla.place(x = 50, y = 200)        
         self.tabla.config(height = 10)
 
         self.tabla.heading("#0", text = "Codigo")
@@ -1939,17 +2036,17 @@ class Reabastecer(CTkToplevel):
 
         # vamos a hacer un buscador 
 
-        self.label_buscador = CTkLabel(self,text="------------------------------ Buscador ------------------------------")
-        self.label_buscador.place(x=680,y=80)
+        self.label_buscador = CTkLabel(self,text="------------------------------ Buscador ------------------------------",bg_color="black")
+        self.label_buscador.place(x=50,y=50)
 
 
         self.texto_buscador_codigo = CTkEntry(self,placeholder_text="Buscar por codigo ...")
-        self.texto_buscador_codigo.place(x=660,y=120)          
+        self.texto_buscador_codigo.place(x=50,y=90)          
 
         self.texto_buscador_codigo.bind("<KeyRelease>", llenar_reabastecer) 
 
         self.texto_buscador_nombre = CTkEntry(self,placeholder_text="Buscar por nombre ...")
-        self.texto_buscador_nombre.place(x=820,y=120) 
+        self.texto_buscador_nombre.place(x=200,y=90) 
 
         self.texto_buscador_nombre.bind("<KeyRelease>", llenar_reabastecer )   
 
@@ -2136,7 +2233,16 @@ class Asociados(CTkToplevel):
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False)) 
 
-        estilos_tablas()        
+        estilos_tablas()   
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo2.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################        
         
         self.tabla = ttk.Treeview(self, columns = ("Fecha","Concepto", "Monto"), show="headings")
         self.tabla.column("#0", width = 100, anchor="center")
@@ -2144,7 +2250,7 @@ class Asociados(CTkToplevel):
         self.tabla.column("Concepto", width = 500, anchor="center")
         self.tabla.column("Monto", width = 100, anchor="center")        
 
-        self.tabla.place(x = 300, y = 100)        
+        self.tabla.place(x = 150, y = 50)        
         self.tabla.config(height = 10)
 
         self.tabla.heading("#0", text = "Id", anchor="center")
@@ -2270,6 +2376,15 @@ class Salarios(CTkToplevel):
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False)) 
 
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo2.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################   
+
         estilos_tablas()   
 
         self.tabla = ttk.Treeview(self, columns = ("Fecha","Concepto", "Monto"), show="headings")
@@ -2278,7 +2393,7 @@ class Salarios(CTkToplevel):
         self.tabla.column("Concepto", width = 500, anchor="center")
         self.tabla.column("Monto", width = 100, anchor="center")        
 
-        self.tabla.place(x = 300, y = 100)        
+        self.tabla.place(x = 150, y = 50)        
         self.tabla.config(height = 10)
 
         self.tabla.heading("#0", text = "Id", anchor="center")
@@ -2417,17 +2532,27 @@ class Almacen(CTkToplevel):
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))  
 
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################   
+
         estilos_tablas()        
         
-        self.tabla = ttk.Treeview(self, columns = ("Nombre", "Costo Usd", "Precio", "Cantidad", "Categoria"))
+        self.tabla = ttk.Treeview(self, columns = ("Nombre", "Costo Usd", "Precio", "Cantidad", "Categoria", "Minimo"))
         self.tabla.column("#0", width = 75)
         self.tabla.column("Nombre", width = 200)
         self.tabla.column("Costo Usd", width = 100)
         self.tabla.column("Precio", width = 75)
         self.tabla.column("Cantidad", width = 75)
         self.tabla.column("Categoria", width = 100)
+        self.tabla.column("Minimo", width = 75)
 
-        self.tabla.place(x = 50, y = 100)        
+        self.tabla.place(x = 50, y = 200)        
         self.tabla.config(height = 10)
 
         self.tabla.heading("#0", text = "Codigo")
@@ -2436,6 +2561,7 @@ class Almacen(CTkToplevel):
         self.tabla.heading("Precio", text = "Precio")
         self.tabla.heading("Cantidad", text = "Cantidad")
         self.tabla.heading("Categoria", text = "Categoria")
+        self.tabla.heading("Minimo", text = "Minimo")
 
         scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
         scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
@@ -2455,21 +2581,21 @@ class Almacen(CTkToplevel):
             sql = f""" SELECT * FROM productos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%'; """
             cursor.execute(sql)
             for index in cursor:
-                self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],))         
+                self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],index[6],))         
 
         # vamos a hacer un buscador 
 
         self.label_buscador = CTkLabel(self,text="------------------------------ Buscador ------------------------------")
-        self.label_buscador.place(x=630,y=80)
+        self.label_buscador.place(x=50,y=50)
 
 
         self.texto_buscador_codigo = CTkEntry(self,placeholder_text="Buscar por codigo ...")
-        self.texto_buscador_codigo.place(x=610,y=120)          
+        self.texto_buscador_codigo.place(x=50,y=90)          
 
         self.texto_buscador_codigo.bind("<KeyRelease>", llenar_tabla) 
 
         self.texto_buscador_nombre = CTkEntry(self,placeholder_text="Buscar por nombre ...")
-        self.texto_buscador_nombre.place(x=770,y=120) 
+        self.texto_buscador_nombre.place(x=200,y=90) 
 
         self.texto_buscador_nombre.bind("<KeyRelease>", llenar_tabla) 
 
@@ -2736,15 +2862,24 @@ class ConsultaSalarios(CTkToplevel):
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))  
 
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################   
+
         estilos_tablas() 
 
         self.tabla = ttk.Treeview(self, columns = ("Fecha","Concepto", "Monto"), show="headings")
         self.tabla.column("#0", width = 100, anchor="center")
         self.tabla.column("Fecha", width = 100, anchor="center")
-        self.tabla.column("Concepto", width = 500, anchor="center")
-        self.tabla.column("Monto", width = 100, anchor="center")        
+        self.tabla.column("Concepto", width = 400, anchor="center")
+        self.tabla.column("Monto", width = 75, anchor="center")        
 
-        self.tabla.place(x = 50, y = 100)        
+        self.tabla.place(x = 20, y = 100)        
         self.tabla.config(height = 10)
 
         self.tabla.heading("#0", text = "Id", anchor="center")
@@ -2902,15 +3037,24 @@ class ConsultaAsociados(CTkToplevel):
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))  
 
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################   
+
         estilos_tablas() 
 
         self.tabla = ttk.Treeview(self, columns = ("Fecha","Concepto", "Monto"), show="headings")
         self.tabla.column("#0", width = 100, anchor="center")
         self.tabla.column("Fecha", width = 100, anchor="center")
-        self.tabla.column("Concepto", width = 500, anchor="center")
-        self.tabla.column("Monto", width = 100, anchor="center")        
+        self.tabla.column("Concepto", width = 400, anchor="center")
+        self.tabla.column("Monto", width = 75, anchor="center")        
 
-        self.tabla.place(x = 50, y = 100)        
+        self.tabla.place(x = 20, y = 100)        
         self.tabla.config(height = 10)
 
         self.tabla.heading("#0", text = "Id", anchor="center")
@@ -3056,17 +3200,26 @@ class Ventas(CTkToplevel):
         self.title("Ventas")    
         htotal = self.winfo_screenheight()
         wtotal = self.winfo_screenwidth()
-        wventana = 1000
+        wventana = 1200
         hventana = 600
         posx = round(wtotal/2-wventana/2)
         posy = round(htotal/2-hventana/2)
         self.geometry(f"+{posx}+{posy}")
-        self.geometry("1000x600") 
+        self.geometry("1200x600") 
         self.resizable(False,False)
         self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))   
         self.lift()
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo.jpg"), size = (1200,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################   
 
         estilos_tablas()  
 
@@ -3128,7 +3281,7 @@ class Ventas(CTkToplevel):
         self.tabla_carrito.column("Cantidad", width = 75, anchor="center")
         self.tabla_carrito.column("Categoria", width = 100, anchor="center")
 
-        self.tabla_carrito.place(x = 670, y = 120)        
+        self.tabla_carrito.place(x = 620, y = 120)        
         self.tabla_carrito.config(height = 10)
 
         self.tabla_carrito.heading("#0", text = "Codigo", anchor="center")
@@ -3162,7 +3315,7 @@ class Ventas(CTkToplevel):
         total.set("0")
 
         self.label_total = CTkLabel(self,textvariable = total)
-        self.label_total.place(x=800,y = 350)
+        self.label_total.place(x=700,y = 450)
 
 
         def limpiar_carrito():
@@ -3425,8 +3578,10 @@ class Ventas(CTkToplevel):
                 vaciar_carrito()
 
 
-        self.buttom_vaciar = CTkButton(self, text="Vaciar", command=vaciar)
-        self.buttom_vaciar.place(x=700,y=50)
+        imagen_vaciar = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/cesta2.jpg"), size = (150,75)) 
+
+        self.buttom_vaciar = CTkButton(self, text="",image=imagen_vaciar, command=vaciar)
+        self.buttom_vaciar.place(x=800,y=30)
 
         vaciar_carrito()
 
@@ -3530,8 +3685,10 @@ class Ventas(CTkToplevel):
                 temp.btn = CTkButton(temp, text="Aceptar", command=aceptar)
                 temp.btn.pack(pady = 10)
 
-        self.btn_regalar = CTkButton(self,text="Regalar",command=regalar)
-        self.btn_regalar.place(x=100,y=500)
+        imagen_regalar = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/regalo.jpg"), size = (150,75)) 
+
+        self.btn_regalar = CTkButton(self,image=imagen_regalar,command=regalar, text="", width=150, height=75)
+        self.btn_regalar.place(x=100,y=450)
 
 
         def vender():
@@ -3811,10 +3968,12 @@ class Ventas(CTkToplevel):
                         temp.destroy()  
 
                 temp.btn_ejecutar = CTkButton(temp, text="Ejecutar Venta", command=ejecutar_venta)
-                temp.btn_ejecutar.pack(pady = 30)   
+                temp.btn_ejecutar.pack(pady = 30)  
 
-        self.btn_vender = CTkButton(self,text="Vender",command=vender)
-        self.btn_vender.place(x=700,y=500)
+        imagen_vender = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/pagar.jpg"), size = (150,75)) 
+
+        self.btn_vender = CTkButton(self,text="", image=imagen_vender,command=vender, width=150,height=75)
+        self.btn_vender.place(x=900,y=450)
 
 
 # **********************************************************************************
@@ -3827,17 +3986,26 @@ class ControlRegalos(CTkToplevel):
         self.title("Control Regalos")    
         htotal = self.winfo_screenheight()
         wtotal = self.winfo_screenwidth()
-        wventana = 1000
+        wventana = 1200
         hventana = 600
         posx = round(wtotal/2-wventana/2)
         posy = round(htotal/2-hventana/2)
         self.geometry(f"+{posx}+{posy}")
-        self.geometry("1000x600") 
+        self.geometry("1200x600") 
         self.resizable(False,False)
         self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))   
         self.lift()
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo4.jpg"), size = (1200,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################   
 
         estilos_tablas()  
 
@@ -3859,7 +4027,7 @@ class ControlRegalos(CTkToplevel):
         self.tabla.heading("Codigo", text = "Codigo", anchor="center")
         self.tabla.heading("Nombre", text = "Nombre", anchor="center")
         self.tabla.heading("Costo USD", text = "Costo USD", anchor="center")        
-        self.tabla.heading("Precio", text = "Costo USD", anchor="center")        
+        self.tabla.heading("Precio", text = "Precio", anchor="center")        
         self.tabla.heading("Cantidad", text = "Cantidad", anchor="center")
         self.tabla.heading("Concepto", text = "Concepto", anchor="center")
 
@@ -3887,16 +4055,16 @@ class ControlRegalos(CTkToplevel):
 
                 cursor.execute(sql)
                 for index in cursor:
-                    self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],index[6],index[7],))  
+                    self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],index[6],index[8],))  
             except:
                 error = messagebox.showerror("Error","No se pudo actualizar la tabla")
 
 
         self.label_fechas = CTkLabel(self,text="---------- Control de fechas ----------")
-        self.label_fechas.place(x=750,y=80) 
+        self.label_fechas.place(x=900,y=80) 
 
         self.texto_fecha_inicial = CTkEntry(self,placeholder_text="Fecha inicial ...")
-        self.texto_fecha_inicial.place(x=750,y=120) 
+        self.texto_fecha_inicial.place(x=900,y=120) 
 
         def fecha_inicial():
             calendario = CTkToplevel()
@@ -3927,10 +4095,10 @@ class ControlRegalos(CTkToplevel):
 
 
         self.btn_fecha_inicial = CTkButton(self,text="...",command=fecha_inicial, width = 27, height = 27)
-        self.btn_fecha_inicial.place(x=900 ,y=120 )
+        self.btn_fecha_inicial.place(x=1050 ,y=120 )
 
         self.texto_fecha_final = CTkEntry(self,placeholder_text="Fecha final ...")
-        self.texto_fecha_final.place(x=750,y=160) 
+        self.texto_fecha_final.place(x=900,y=160) 
 
         def fecha_final():
             calendario = CTkToplevel()
@@ -3961,19 +4129,19 @@ class ControlRegalos(CTkToplevel):
 
 
         self.btn_fecha_final = CTkButton(self,text="...",command=fecha_final, width = 27, height = 27)
-        self.btn_fecha_final.place(x=900 ,y=160 )
+        self.btn_fecha_final.place(x=1050 ,y=160 )
 
 
         self.label_buscador = CTkLabel(self,text="---------- Buscador ----------")
-        self.label_buscador.place(x=750,y=220)
+        self.label_buscador.place(x=900,y=220)
 
         self.texto_buscador_codigo = CTkEntry(self,placeholder_text="Buscar por codigo ...")
-        self.texto_buscador_codigo.place(x=750,y=260)          
+        self.texto_buscador_codigo.place(x=900,y=260)          
 
         self.texto_buscador_codigo.bind("<KeyRelease>", llenar_tabla) 
 
         self.texto_buscador_nombre = CTkEntry(self,placeholder_text="Buscar por nombre ...")
-        self.texto_buscador_nombre.place(x=750,y=300) 
+        self.texto_buscador_nombre.place(x=900,y=300) 
 
         self.texto_buscador_nombre.bind("<KeyRelease>", llenar_tabla )  
 
@@ -4046,17 +4214,26 @@ class ControlVentas(CTkToplevel):
         self.title("Control Ventas")    
         htotal = self.winfo_screenheight()
         wtotal = self.winfo_screenwidth()
-        wventana = 1000
+        wventana = 1200
         hventana = 600
         posx = round(wtotal/2-wventana/2)
         posy = round(htotal/2-hventana/2)
         self.geometry(f"+{posx}+{posy}")
-        self.geometry("1000x600") 
+        self.geometry("1200x600") 
         self.resizable(False,False)
         self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))   
         self.lift()
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo.jpg"), size = (1200,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################   
 
         estilos_tablas()  
 
@@ -4071,7 +4248,7 @@ class ControlVentas(CTkToplevel):
         self.tabla.column("Envia", width = 200, anchor="center")
         self.tabla.column("Recibe", width = 200, anchor="center")
 
-        self.tabla.place(x = 30, y = 300)        
+        self.tabla.place(x = 30, y = 200)        
         self.tabla.config(height = 11)
 
         self.tabla.heading("#0", text = "Id", anchor="center")
@@ -4241,10 +4418,10 @@ class ControlVentas(CTkToplevel):
             temp.tabla_especifica.column("Costo USD", width = 75, anchor="center")       
             temp.tabla_especifica.column("Precio", width = 75, anchor="center")        
             temp.tabla_especifica.column("Cantidad", width = 75, anchor="center")
-            temp.tabla_especifica.column("Envia", width = 200, anchor="center")
-            temp.tabla_especifica.column("Recibe", width = 200, anchor="center")
+            temp.tabla_especifica.column("Envia", width = 100, anchor="center")
+            temp.tabla_especifica.column("Recibe", width = 100, anchor="center")
 
-            temp.tabla_especifica.place(x = 120, y = 100)        
+            temp.tabla_especifica.place(x = 50, y = 100)        
             temp.tabla_especifica.config(height = 11)
 
             temp.tabla_especifica.heading("#0", text = "Id", anchor="center")
@@ -4561,9 +4738,18 @@ class ConsultaTotales(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))   
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))         
+        self.after(200, lambda: self.attributes('-topmost', False))   
 
-        self.label_informaciones = CTkLabel(self, text="---------- Informaciones ----------")
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/pagos1.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################         
+
+        self.label_informaciones = CTkLabel(self, text="---------- Informaciones ----------", bg_color="black")
         self.label_informaciones.place(x=500,y=60)
 
         self.label_ingresos = CTkLabel(self, text="Total Ingresos: ")
@@ -4811,25 +4997,11 @@ class ConsultaTotales(CTkToplevel):
 
                     ############################################################
 
-
-
                 except:
                     error = messagebox.showerror("Error","No se ha podido mostrar todos los datos \n Revise la informacion escrita en los campos de las fechas")
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-        self.label_fechas = CTkLabel(self,text="---------- Control de fechas ----------")
+        self.label_fechas = CTkLabel(self,text="---------- Control de fechas ----------", bg_color="black")
         self.label_fechas.place(x=50,y=50) 
 
         self.texto_fecha_inicial = CTkEntry(self,placeholder_text="Fecha inicial ...")
@@ -4903,39 +5075,119 @@ class ConsultaTotales(CTkToplevel):
 
 
 
+# **********************************************************************************
+# ************************************  Almacen ************************************
+# **********************************************************************************
 
+class Deficit(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Deficit")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x600") 
+        self.resizable(False,False)
+        self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))   
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))  
 
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo.jpg"), size = (1000,600))  
 
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
 
+        #######################################################   
 
+        estilos_tablas()        
+        
+        self.tabla = ttk.Treeview(self, columns = ("Nombre", "Costo Usd", "Precio", "Cantidad", "Categoria", "Minimo"))
+        self.tabla.column("#0", width = 75)
+        self.tabla.column("Nombre", width = 200)
+        self.tabla.column("Costo Usd", width = 100)
+        self.tabla.column("Precio", width = 75)
+        self.tabla.column("Cantidad", width = 75)
+        self.tabla.column("Categoria", width = 100)
+        self.tabla.column("Minimo", width = 75)
 
+        self.tabla.place(x = 50, y = 100)        
+        self.tabla.config(height = 10)
 
+        self.tabla.heading("#0", text = "Codigo")
+        self.tabla.heading("Nombre", text = "Nombre")
+        self.tabla.heading("Costo Usd", text = "Costo Usd")
+        self.tabla.heading("Precio", text = "Precio")
+        self.tabla.heading("Cantidad", text = "Cantidad")
+        self.tabla.heading("Categoria", text = "Categoria")
+        self.tabla.heading("Minimo", text = "Minimo")
 
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
 
+        self.tabla.config(yscrollcommand = scrollbar.set)
 
+        def llenar_tabla():
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "lilly",
+                password = "123456",
+                database = "lilly"
+                )
+            cursor = conn.cursor()
 
+            sql = f""" SELECT * FROM `productos` WHERE `Cantidad` <= `Minimo`; """
+            cursor.execute(sql)
+            for index in cursor:
+                self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],index[6],))  
 
+        llenar_tabla()
 
+        # ahora un boton para que haga el txt
+        def hacer_txt():
+            deficit = []
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "lilly",
+                password = "123456",
+                database = "lilly"
+                )
+            cursor = conn.cursor()
 
+            sql = f""" SELECT `Nombre`,`Cantidad`,`Minimo` FROM `productos` WHERE `Cantidad` <= `Minimo`; """
+            cursor.execute(sql)
+            for index in cursor:
+                deficit.append([index[0],index[1],index[2]])
 
+            archivo_txt = filedialog.asksaveasfilename(
+                defaultextension=".txt",
+                filetypes=[("Archivos de texto", "*.txt")],
+                title="Guardar Productos en Deficit"
+            )
 
+            if archivo_txt:
+                with open(archivo_txt, "w") as f:
+                    # Escribir datos de quien ENVIA
+                    f.write("PRODUCTOS EN DEFICIT:\n")
+                    f.write("----------------------------------------\n")
+                    
+                    for defi in deficit:                                    
+                        f.write(f"Nombre: {defi[0]}\n")
+                        f.write(f"Cantidad: {defi[1]}\n")                                    
+                        f.write(f"Minimo: {defi[2]}\n")                                    
+                        f.write("----------------------------------------\n")                            
+                
+                messagebox.showinfo("Exito", f"Informacion guardada en:\n{archivo_txt}")           
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        self.btn = CTkButton(self,text="Hacer Txt", command=hacer_txt)
+        self.btn.place(x=50,y=450)
 
 
 autenticacion = Autenticacion()
