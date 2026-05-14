@@ -14,6 +14,8 @@ import copy
 from dateutil.relativedelta import relativedelta
 
 fecha_actual = datetime.now().date()
+fecha_hora_actual = datetime.now()
+fecha_hora_actual = fecha_hora_actual.strftime("%Y-%m-%d %I:%M:%S %p")
 
 conn = mysql.connector.connect(
     host = "localhost",
@@ -208,7 +210,7 @@ conn = mysql.connector.connect(
 cursor = conn.cursor()
 
 try:
-    sql = """ CREATE TABLE `clientes` (`ID` int(11) NOT NULL, `Nombre` varchar(50) NOT NULL, `Apellido 1` varchar(50) NOT NULL, `Apellido 2` varchar(50) NOT NULL, `Modalidad` varchar(50) NOT NULL, `Trabajador` varchar(50) NOT NULL, `Telefono` varchar(50) NOT NULL,  `Ultima_Asistencia` date NOT NULL,  `Fecha_Pago` date NOT NULL) ENGINE=InnoDB """
+    sql = """ CREATE TABLE `clientes` (`ID` int(11) NOT NULL, `Nombre` varchar(50) NOT NULL, `Apellido 1` varchar(50) NOT NULL, `Apellido 2` varchar(50) NOT NULL, `Modalidad` varchar(50) NOT NULL, `Trabajador` varchar(50) NOT NULL, `Telefono` varchar(50) NOT NULL,  `Ultima_Asistencia` varchar(50) NOT NULL,  `Fecha_Pago` date NOT NULL) ENGINE=InnoDB """
     cursor.execute(sql)
     conn.commit()
 except:
@@ -272,7 +274,7 @@ conn = mysql.connector.connect(
 cursor = conn.cursor()
 
 try:
-    sql = """ CREATE TABLE `pagos` (  `fecha` date NOT NULL,  `id` int(11) NOT NULL,  `nombre_completo` varchar(50) NOT NULL,  `modalidad` varchar(50) NOT NULL,  `Trabajador` varchar(50) NOT NULL,  `pagar_activacion` varchar(50) NOT NULL,  `importe` int(11) NOT NULL,  `pago_entrenador` int(11) NOT NULL) ENGINE=InnoDB """
+    sql = """ CREATE TABLE `pagos` (`id_pago` int(11) NOT NULL, `fecha` date NOT NULL,  `id` int(11) NOT NULL,  `nombre_completo` varchar(50) NOT NULL,  `modalidad` varchar(50) NOT NULL,  `Trabajador` varchar(50) NOT NULL,  `pagar_activacion` varchar(50) NOT NULL,  `importe` int(11) NOT NULL,  `pago_entrenador` int(11) NOT NULL) ENGINE=InnoDB """
     cursor.execute(sql)
     conn.commit()
 except:
@@ -296,7 +298,16 @@ class Autenticacion(CTk):
         self.geometry(f"+{posx}+{posy}")
         self.geometry("400x200")
         self.resizable(False,False)            
-        self.iconbitmap("D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico")        
+        self.iconbitmap("D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico")   
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/1.jpg"), size = (400,200))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################     
 
         ################# textos y entradas ##################
 
@@ -440,7 +451,16 @@ class NuevaLicencia(CTkToplevel):
         self.resizable(False,False)
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))        
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/7.jpg"), size = (300,200))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################      
 
         self.label = CTkLabel(self, text = "Introduzca la licencia nueva", font=("Times New Roman",14))
         self.label.place(x = 60 , y = 20)        
@@ -583,7 +603,19 @@ class Lobby(CTkToplevel):
         posy = round(htotal/2-hventana/2)
         self.geometry(f"+{posx}+{posy}")
         self.after(250, lambda: self.iconbitmap('D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico'))
-        self.resizable(False,False)          
+        self.resizable(False,False)  
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/lobby.jpg"), size = (1300,700))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################         
         
         firma = "Vence (" + str(fecha_vencimiento) + ")"
         self.label_gym_98mph = CTkLabel(self, text = firma, font=("Times New Roman",16))
@@ -605,20 +637,33 @@ class Lobby(CTkToplevel):
         self.menu = Menu(self)
         self.config(menu=self.menu, width="200", height="100")
 
-        economia_menu = Menu(self.menu, tearoff = 0)   
-        economia_menu.add_command(label="Balance ")
-        economia_menu.add_command(label="Modalidad ")
-        economia_menu.add_command(label="Agregos")
-        economia_menu.add_command(label="Pago Entrenadores ")
-        economia_menu.add_command(label="Pagos Atrasados")
-        
-        entrenadores_menu = Menu(self.menu, tearoff = 0)
-        entrenadores_menu.add_command(label="Listado ")  
+        def pago_entrenadores():
+            pe = PagoEntrenadores()
 
-        agregos_menu = Menu(self.menu, tearoff = 0)
-        agregos_menu.add_command(label="Contratar")
-        agregos_menu.add_command(label="Modificar")
-        agregos_menu.add_command(label="Despedir") 
+        def atrasados():
+            atr = Atrasados()
+
+        def balance():
+            bal = Balance()
+
+        economia_menu = Menu(self.menu, tearoff = 0)   
+        economia_menu.add_command(label="Balance",command=balance)        
+        economia_menu.add_command(label="Pago Entrenadores",command=pago_entrenadores)
+        economia_menu.add_command(label="Pagos Atrasados",command=atrasados)
+
+        def entrenadores_lobby():
+            ent = Entrenadores()
+
+        def adm_extras_lobby():
+            ent = Extras()
+
+        def adm_modalidades_lobby():
+            ent = Modalidades()
+        
+        administrativo_menu = Menu(self.menu, tearoff = 0)
+        administrativo_menu.add_command(label="Entrenadores ",command=entrenadores_lobby)          
+        administrativo_menu.add_command(label="Extras",command=adm_extras_lobby)          
+        administrativo_menu.add_command(label="Modalidades",command=adm_modalidades_lobby)          
 
         def agregar_usuario():
             usuario_agregar = UsuarioAgregar()
@@ -637,24 +682,21 @@ class Lobby(CTkToplevel):
             asistemcia_pago = AsistenciaYPago() 
 
         def control_pagos_lobby():
-            pass 
+            cp = ControlPagos()
 
-        def extra_lobby():
-            pass  
+        def ejecutar_extra_lobby():
+            ee = EjecutarExtra()       
 
-        def entrenadores_lobby():
-            ent = Entrenadores()
-
-        def nuevo_cliente_lobby():
+        def clientes_lobby():
             nc = Clientes()
 
 
         self.menu.add_cascade (label="Recepcion", command=asistencia_pago_cliente_lobby)
-        self.menu.add_cascade (label="Control Pagos", command=control_pagos_lobby)
-        self.menu.add_cascade (label="Extras", command=extra_lobby)
-        self.menu.add_cascade (label="Entrenadores", command=entrenadores_lobby)
-        self.menu.add_cascade (label="Clientes", command = nuevo_cliente_lobby) 
+        self.menu.add_cascade (label="Extras", command=ejecutar_extra_lobby)
+        self.menu.add_cascade (label="Control Pagos", command=control_pagos_lobby)        
+        self.menu.add_cascade (label="Clientes", command = clientes_lobby) 
         self.menu.add_cascade (label="Economia", menu = economia_menu)               
+        self.menu.add_cascade (label="Administrativo", menu = administrativo_menu)               
         self.menu.add_cascade(label="Usuarios", menu = usuario_menu)
         self.menu.add_cascade(label = "Licencia", command= agregar_nueva_licencia)
         self.menu.add_cascade(label="Cerrar", command = cerrar_cesion)
@@ -681,7 +723,16 @@ class UsuarioAgregar(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico'))  
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))        
+        self.after(200, lambda: self.attributes('-topmost', False))   
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/fondo_asistencia.jpg"), size = (400,300))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################      
 
         # *********************** Label ****************************************
 
@@ -763,7 +814,16 @@ class EliminarUsuario(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico'))  
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))        
+        self.after(200, lambda: self.attributes('-topmost', False))   
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/fondo_asistencia.jpg"), size = (400,300))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################      
 
         self.label_nombre = CTkLabel(self,text = "Usuario:", font=("Times New Roman",14))
         self.label_nombre.place(x = 100 , y = 100)
@@ -1066,7 +1126,7 @@ class AsistenciaYPago(CTkToplevel):
                     )
                 cursor = conn.cursor()
 
-                sql = f""" UPDATE `clientes` SET `Ultima_Asistencia`='{fecha_actual}' WHERE `ID` = {self.texto_buscar_por_id.get()} """
+                sql = f""" UPDATE `clientes` SET `Ultima_Asistencia`='{fecha_hora_actual}' WHERE `ID` = {self.texto_buscar_por_id.get()} """
                 cursor.execute(sql)
                 conn.commit()
 
@@ -1090,7 +1150,7 @@ class AsistenciaYPago(CTkToplevel):
                     )
                 cursor = conn.cursor()
 
-                sql = """SELECT MAX(id) FROM `pagos`;"""
+                sql = """SELECT MAX(id_pago) FROM `pagos`;"""
                 cursor.execute(sql)
                 for index in cursor:
                     if index[0] == None:
@@ -1148,7 +1208,7 @@ class AsistenciaYPago(CTkToplevel):
                     )
                 cursor = conn.cursor()
 
-                sql = f""" INSERT INTO `pagos`(`fecha`, `id`, `nombre_completo`, `modalidad`, `Trabajador`, `pagar_activacion`, `importe`, `pago_entrenador`) VALUES ('{fecha_actual}','{id_pago}','{nombre_completo}','{modalidad}','{trabajador}','NO','{pago_importe}','{pago_entrenador}') """
+                sql = f""" INSERT INTO `pagos`(`id_pago`,`fecha`, `id`, `nombre_completo`, `modalidad`, `Trabajador`, `pagar_activacion`, `importe`, `pago_entrenador`) VALUES ('{id_pago}','{fecha_actual}','{self.texto_buscar_por_id.get()}','{nombre_completo}','{modalidad}','{trabajador}','NO','{pago_importe}','{pago_entrenador}') """
                 cursor.execute(sql)
                 conn.commit()
 
@@ -1193,7 +1253,16 @@ class Entrenadores(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico')) 
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))                
+        self.after(200, lambda: self.attributes('-topmost', False)) 
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/logo3.jpg"), size = (800,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################                
 
         estilos_tablas()  
 
@@ -1324,38 +1393,344 @@ class Entrenadores(CTkToplevel):
 
 
         self.btn_agregar = CTkButton(self, text = "Agregar", command = agregar, width = 200, height = 50)
-        self.btn_agregar.place(x = 100, y = 400)      
+        self.btn_agregar.place(x = 100, y = 400)   
 
 
+# **********************************************************************************
+# ************************************ Extra ***************************************
+# **********************************************************************************
+
+class Extras(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Extras")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 800
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("800x600") 
+        self.resizable(False,False) 
+        self.after(250, lambda: self.iconbitmap('D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico')) 
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))   
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/10.jpg"), size = (800,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################              
+
+        estilos_tablas()  
+
+        self.tabla = ttk.Treeview(self, columns = ("Precio","Pago Entrenador"))
+        self.tabla.column("#0", width = 200)
+        self.tabla.column("Precio", width = 100)
+        self.tabla.column("Pago Entrenador", width = 150)
+
+        self.tabla.place(x = 100, y = 50)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Extra")
+        self.tabla.heading("Precio", text = "Precio")
+        self.tabla.heading("Pago Entrenador", text = "Pago Entrenador")
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set)
+
+        def llenar_tabla():
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "root",
+                password = "",
+                database = "gym_98MPH"
+                )
+            cursor = conn.cursor()
+
+            sql = """SELECT * FROM `extra`;"""
+            cursor.execute(sql)
+
+            for index in cursor:
+                self.tabla.insert("",END, text = index[0], values=(index[1],index[2],))
+
+        llenar_tabla()
+
+        def on_click(event):            
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                
+                nombre = self.tabla.item(item, "text") 
+
+            # ahora eliminar la modalidad
+            try:
+                string = f"Vas a eliminar a {nombre} de los extras"
+                conf = messagebox.askokcancel("Confirmar",string)    
+                if conf:
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "root",
+                        password = "",
+                        database = "gym_98MPH"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = f""" DELETE FROM `extra` WHERE `extra` = "{nombre}" """
+                    cursor.execute(sql)
+                    conn.commit()
+
+                    llenar_tabla()
+                    term = messagebox.showinfo("Terminado","Se ha eliminado la modalidad")
+            except:
+                error = messagebox.showerror("Error","Selecciona una modalidad para eliminar") 
+
+        self.tabla.bind("<Double-1>", on_click)
+
+        def agregar():           
+            temp = CTkToplevel()
+            temp.title("Agregar") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False))  
+            temp.after(250, lambda: temp.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico')) 
+
+            temp.texto_extra = CTkEntry(temp, placeholder_text="Extra ...")
+            temp.texto_extra.pack(pady = 10)
+
+            temp.texto_precio = CTkEntry(temp, placeholder_text="Pecio ...")
+            temp.texto_precio.pack(pady = 10)
+
+            temp.texto_entrenador = CTkEntry(temp, placeholder_text="Pago Entrenador ...")
+            temp.texto_entrenador.pack(pady = 10)
+
+            def aceptar():
+                if temp.texto_extra.get() == "" or temp.texto_precio.get() == "" or temp.texto_entrenador.get() == "":
+                    error = messagebox.showerror("Error","Debes llenar los campos")
+                else:
+                    # vemos que no se repita el trabajador
+                    repetido = False
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "root",
+                        password = "",
+                        database = "gym_98MPH"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = f""" SELECT * FROM `extra` """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        if index[0] == temp.texto_extra.get():
+                            repetido = True
+                            error = messagebox.showerror("Error","Ese extra ya existe")
+
+                    if not repetido:
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "root",
+                            password = "",
+                            database = "gym_98MPH"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = f""" INSERT INTO `extra`(`extra`, `precio`, `pago entrenador`) VALUES ('{temp.texto_extra.get()}','{temp.texto_precio.get()}','{temp.texto_entrenador.get()}') """
+                        cursor.execute(sql)
+                        conn.commit()
+
+                        llenar_tabla()
+
+                        term = messagebox.showinfo("Terminado","Se ha agregado el entrenador")
+                        temp.destroy()
+
+            temp.btn = CTkButton(temp, text="Aceptar", command=aceptar)
+            temp.btn.pack(pady = 10)  
+        
+        self.btn_agregar = CTkButton(self, text = "Agregar", command = agregar, width = 200, height = 50)
+        self.btn_agregar.place(x = 100, y = 400) 
+        
 
 
+# **********************************************************************************
+# ***************************** Modalidades ***************************************
+# **********************************************************************************
 
+class Modalidades(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Modalidades")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 800
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("800x600") 
+        self.resizable(False,False) 
+        self.after(250, lambda: self.iconbitmap('D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico')) 
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False)) 
 
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/10.jpg"), size = (800,600))  
 
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
 
+        #######################################################                
 
+        estilos_tablas()  
 
+        self.tabla = ttk.Treeview(self, columns = ("Precio","Pago Entrenador"))
+        self.tabla.column("#0", width = 200)
+        self.tabla.column("Precio", width = 100)
+        self.tabla.column("Pago Entrenador", width = 150)
 
+        self.tabla.place(x = 100, y = 50)        
+        self.tabla.config(height = 10)
 
+        self.tabla.heading("#0", text = "Modalidades")
+        self.tabla.heading("Precio", text = "Precio")
+        self.tabla.heading("Pago Entrenador", text = "Pago Entrenador")
 
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
 
+        self.tabla.config(yscrollcommand = scrollbar.set)
 
+        def llenar_tabla():
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "root",
+                password = "",
+                database = "gym_98MPH"
+                )
+            cursor = conn.cursor()
 
+            sql = """SELECT * FROM `modalidad`;"""
+            cursor.execute(sql)
 
+            for index in cursor:
+                self.tabla.insert("",END, text = index[0], values=(index[1],index[2],))
 
+        llenar_tabla()
 
+        def on_click(event):            
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                
+                nombre = self.tabla.item(item, "text") 
 
+            # ahora eliminar la modalidad
+            try:
+                string = f"Vas a eliminar a {nombre} de las modalidades"
+                conf = messagebox.askokcancel("Confirmar",string)    
+                if conf:
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "root",
+                        password = "",
+                        database = "gym_98MPH"
+                        )
+                    cursor = conn.cursor()
 
+                    sql = f""" DELETE FROM `modalidad` WHERE `modalidad` = "{nombre}" """
+                    cursor.execute(sql)
+                    conn.commit()
 
+                    llenar_tabla()
+                    term = messagebox.showinfo("Terminado","Se ha eliminado la modalidad")
+            except:
+                error = messagebox.showerror("Error","Selecciona una modalidad para eliminar") 
 
+        self.tabla.bind("<Double-1>", on_click)
 
+        def agregar():           
+            temp = CTkToplevel()
+            temp.title("Agregar") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False))  
+            temp.after(250, lambda: temp.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico')) 
 
+            temp.texto_modalidad = CTkEntry(temp, placeholder_text="Modalidad ...")
+            temp.texto_modalidad.pack(pady = 10)
 
+            temp.texto_precio = CTkEntry(temp, placeholder_text="Pecio ...")
+            temp.texto_precio.pack(pady = 10)
 
+            temp.texto_entrenador = CTkEntry(temp, placeholder_text="Pago Entrenador ...")
+            temp.texto_entrenador.pack(pady = 10)
 
+            def aceptar():
+                if temp.texto_modalidad.get() == "" or temp.texto_precio.get() == "" or temp.texto_entrenador.get() == "":
+                    error = messagebox.showerror("Error","Debes llenar los campos")
+                else:
+                    # vemos que no se repita el trabajador
+                    repetido = False
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "root",
+                        password = "",
+                        database = "gym_98MPH"
+                        )
+                    cursor = conn.cursor()
 
+                    sql = f""" SELECT * FROM `modalidad` """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        if index[0] == temp.texto_modalidad.get():
+                            repetido = True
+                            error = messagebox.showerror("Error","Ese trabajador ya existe")
 
-# ************************* estoy trabajando 
+                    if not repetido:
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "root",
+                            password = "",
+                            database = "gym_98MPH"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = f""" INSERT INTO `modalidad`(`modalidad`, `precio`, `pago_entrenador`) VALUES ('{temp.texto_modalidad.get()}','{temp.texto_precio.get()}','{temp.texto_entrenador.get()}') """
+                        cursor.execute(sql)
+                        conn.commit()
+
+                        llenar_tabla()
+
+                        term = messagebox.showinfo("Terminado","Se ha agregado el entrenador")
+                        temp.destroy()
+
+            temp.btn = CTkButton(temp, text="Aceptar", command=aceptar)
+            temp.btn.pack(pady = 10)  
+        
+        self.btn_agregar = CTkButton(self, text = "Agregar", command = agregar, width = 200, height = 50)
+        self.btn_agregar.place(x = 100, y = 400) 
 
 
 
@@ -1381,6 +1756,15 @@ class Clientes(CTkToplevel):
         self.lift()
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False)) 
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/7.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        ####################################################### 
 
 
         # ************************** Seccion Modificar y Eliminar ********************
@@ -1441,14 +1825,252 @@ class Clientes(CTkToplevel):
         self.texto_buscar_id.bind("<KeyRelease>", llenar_tabla) 
         self.texto_buscar_nombre.bind("<KeyRelease>", llenar_tabla) 
 
+        # ahora modificar o eliminar clientes 
+        def on_click(event):
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                
+                id_cliente = self.tabla.item(item, "text") 
 
+            # ahora mostrar ventana para decidirr si elimino o modifico
+            temp = CTkToplevel()
+            temp.title("Opcicon") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False))  
+            temp.after(250, lambda: temp.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico')) 
 
+            def modificar():
+                # mostramos la ventana para modificar
+                mod = CTkToplevel()
+                mod.title("Modificar Cliente")    
+                htotal = mod.winfo_screenheight()
+                wtotal = mod.winfo_screenwidth()
+                wventana = 1000
+                hventana = 600
+                posx = round(wtotal/2-wventana/2)
+                posy = round(htotal/2-hventana/2)
+                mod.geometry(f"+{posx}+{posy}")
+                mod.geometry("1000x600") 
+                mod.resizable(False,False)
+                mod.after(250, lambda: mod.iconbitmap('D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico'))   
+                mod.lift()
+                mod.attributes('-topmost', True)
+                mod.after(200, lambda: mod.attributes('-topmost', False)) 
 
+                # ******************* modificar cliente 
+                mod.label_id = CTkLabel(mod,text="ID:", font=("Times New Roman",16))
+                mod.label_id.place(x = 738, y = 70)   
+
+                mod.texto_id = CTkEntry(mod)
+                mod.texto_id.place(x = 800, y = 70)     
+
+                mod.label_nombre = CTkLabel(mod,text="Nombre:", font=("Times New Roman",16))
+                mod.label_nombre.place(x = 704, y = 110) 
+                
+                mod.texto_nombre = CTkEntry(mod)
+                mod.texto_nombre.place(x = 800, y = 110)      
+
+                mod.label_apellido1 = CTkLabel(mod,text="Apellido 1:", font=("Times New Roman",16))
+                mod.label_apellido1.place(x = 692, y = 150)  
+            
+                mod.texto_apellido1 = CTkEntry(mod)
+                mod.texto_apellido1.place(x = 800, y = 150)            
+
+                mod.label_apellido2 = CTkLabel(mod,text="Apellido 2:", font=("Times New Roman",16))
+                mod.label_apellido2.place(x = 692, y = 190)  
+
+                mod.texto_apellido2 = CTkEntry(mod)
+                mod.texto_apellido2.place(x = 800, y = 190)           
+
+                mod.label_modalidad = CTkLabel(mod,text="Modalidad:", font=("Times New Roman",16))
+                mod.label_modalidad.place(x = 684, y = 230)  
+
+                items_modalidad = []
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "root",
+                    password = "",
+                    database = "gym_98MPH"
+                    )
+                cursor = conn.cursor()
+
+                sql = """SELECT `modalidad` FROM `modalidad`"""
+                cursor.execute(sql)
+                for index in cursor:
+                    items_modalidad.append(index[0])
+                
+                mod.texto_modalidad = CTkComboBox(mod, values=items_modalidad)
+                mod.texto_modalidad.set("")              
+                mod.texto_modalidad.place(x = 800, y = 230)                
+
+                mod.label_entrenador = CTkLabel(mod,text="Entrenador:", font=("Times New Roman",16))
+                mod.label_entrenador.place(x = 681, y = 270) 
+
+                items_entrenador = []
+                sql = """SELECT * FROM `entrenadores`"""
+                cursor.execute(sql)
+                for index in cursor:
+                    items_entrenador.append(index[0])
+                
+                mod.texto_entrenador = CTkComboBox(mod,values=items_entrenador)
+                mod.texto_entrenador.set("")
+                mod.texto_entrenador.place(x = 800, y = 270)              
+
+                mod.label_ultima_asistencia = CTkLabel(mod,text="Ultima Asistencia:", font=("Times New Roman",16))
+                mod.label_ultima_asistencia.place(x = 650, y = 310) 
+                
+                mod.texto_asistencia = CTkEntry(mod)
+                mod.texto_asistencia.place(x = 800, y = 310)              
+
+                mod.label_fecha_pago = CTkLabel(mod,text="Pago:", font=("Times New Roman",16))
+                mod.label_fecha_pago.place(x = 725, y = 350) 
+                
+                mod.texto_fecha_pago = CTkEntry(mod)
+                mod.texto_fecha_pago.place(x = 800, y = 350)              
+
+                mod.label_telefono = CTkLabel(mod,text="Telefono:", font=("Times New Roman",16))
+                mod.label_telefono.place(x = 700, y = 390)
+                
+                mod.texto_telefono = CTkEntry(mod)
+                mod.texto_telefono.place(x = 800, y = 390)  
+
+                # ***************** Botones ************************
+                def btn_fecha_modificar_cliente(): 
+
+                    calendario = CTkToplevel()
+                    calendario.title("Calendario") 
+                    htotal = calendario.winfo_screenheight()
+                    wtotal = calendario.winfo_screenwidth()
+                    wventana = 300
+                    hventana = 300
+                    posx = round(wtotal/2-wventana/2)
+                    posy = round(htotal/2-hventana/2)
+                    calendario.geometry(f"+{posx}+{posy}")
+                    calendario.lift()
+                    calendario.attributes('-topmost', True)
+                    calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+                    cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+                    cal.pack()  
+
+                    def fecha():
+                        mod.texto_asistencia.delete(0,END)
+                        mod.texto_fecha_pago.delete(0,END)
+
+                        fecha_select = cal.get_date()
+                        fecha = datetime.strptime(fecha_select, "%Y-%m-%d").date()              
+                        nueva_fecha = fecha + relativedelta(months=1)                
+
+                        mod.texto_asistencia.insert(0,str(fecha_select))
+                        mod.texto_fecha_pago.insert(0,str(nueva_fecha))
+
+                        calendario.destroy()
+
+                    btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+                    btn.pack()       
+                    
+                
+                mod.btn_fecha2 = CTkButton(self,text="...",command=btn_fecha_modificar_cliente, width = 27, height = 27)
+                mod.btn_fecha2.place(x=950 ,y=310 )
+
+                # ahora vamos a mostrar los datos que estaban antes 
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "root",
+                    password = "",
+                    database = "gym_98MPH"
+                    )
+                cursor = conn.cursor()                   
+                sql = f""" SELECT * FROM `clientes` WHERE `ID` = {id_cliente} """
+                cursor.execute(sql)
+                for index in cursor:
+                    mod.texto_id.insert(0,index[0])
+                    mod.texto_nombre.insert(0,index[1])
+                    mod.texto_apellido1.insert(0,index[2])
+                    mod.texto_apellido2.insert(0,index[3])
+                    mod.texto_modalidad.set(index[4])
+                    mod.texto_entrenador.set(index[5])
+                    mod.texto_telefono.insert(0,index[6])
+                    mod.texto_asistencia.insert(0,index[7])
+                    mod.texto_fecha_pago.insert(0,index[8])
+
+                def modificar_cliente():
+                     conf = messagebox.askokcancel("Confirmar","Se va a modificar el cliente")
+                     if conf:
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "root",
+                            password = "",
+                            database = "gym_98MPH"
+                            )
+                        cursor = conn.cursor()                   
+                        sql = f""" UPDATE `clientes` SET `ID`='{mod.texto_id.get()}',`Nombre`='{mod.texto_nombre.get()}',`Apellido 1`='{mod.texto_apellido1.get()}',`Apellido 2`='{mod.texto_apellido2.get()}',`Modalidad`='{mod.texto_modalidad.get()}',`Trabajador`='{mod.texto_entrenador.get()}',`Telefono`='{mod.texto_telefono.get()}',`Ultima_Asistencia`='{mod.texto_asistencia.get()}',`Fecha_Pago`='{mod.texto_fecha_pago.get()}' WHERE `ID` = {id_cliente} """
+                        cursor.execute(sql)
+                        conn.commit()
+
+                        mod.destroy()
+                        temp.destroy()
+                        llenar_tabla(True)
+
+                mod.btn_moificar = CTkButton(mod,text="Modificar Cliente",command=modificar_cliente, width = 150, height = 40)
+                mod.btn_moificar.place(x=730 ,y=500 )
+
+            btn1 = CTkButton(temp,text="Modificar",command=modificar)
+            btn1.pack(pady=20)
+
+            def eliminar():
+                conf = messagebox.askokcancel("Eliminar","Se va a eliminar el cliente")
+                if conf:
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "root",
+                        password = "",
+                        database = "gym_98MPH"
+                        )
+                    cursor = conn.cursor()                   
+                    sql = f""" DELETE FROM `clientes` WHERE `ID` = {id_cliente} """
+                    cursor.execute(sql)
+                    conn.commit()
+
+                    #**************** actualizar el ultimo_id
+                    global ultimo_id
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "root",
+                        password = "",
+                        database = "gym_98MPH"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = """SELECT MAX(ID) FROM `clientes`;"""
+                    cursor.execute(sql)        
+                    for index in cursor:                
+                        ultimo_id.set(index[0])
+
+                    if ultimo_id is None:
+                        ultimo_id = "No hay clientes" 
+
+                    temp.destroy()
+                    llenar_tabla(True)
+
+            btn2 = CTkButton(temp,text="Eliminar",command=eliminar)
+            btn2.pack(pady=20)
+
+        self.tabla.bind("<Double-1>", on_click)
 
         # ************************** Seccion Agregar cliente  *************************      
         self.label2 = CTkLabel(self,text="-------------------- Agregar Cliente --------------------", font=("Times New Roman",16))
         self.label2.place(x = 650, y = 30)  
 
+        global ultimo_id
         ultimo_id = StringVar()
         ultimo_id.set("")
 
@@ -1533,6 +2155,7 @@ class Clientes(CTkToplevel):
         self.label_ultima_asistencia.place(x = 650, y = 310) 
         
         self.texto_asistencia = CTkEntry(self)
+        self.texto_asistencia.insert(0,fecha_hora_actual)
         self.texto_asistencia.place(x = 800, y = 310)              
 
         self.label_fecha_pago = CTkLabel(self,text="Pago:", font=("Times New Roman",16))
@@ -1566,16 +2189,11 @@ class Clientes(CTkToplevel):
             cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
             cal.pack()  
 
-            def fecha():
-                self.texto_asistencia.delete(0,END)
+            def fecha():                
                 self.texto_fecha_pago.delete(0,END)
 
-                fecha_select = cal.get_date()
-                fecha = datetime.strptime(fecha_select, "%Y-%m-%d").date()              
-                nueva_fecha = fecha + relativedelta(months=1)                
-
-                self.texto_asistencia.insert(0,str(fecha_select))
-                self.texto_fecha_pago.insert(0,str(nueva_fecha))
+                fecha_select = cal.get_date()          
+                self.texto_fecha_pago.insert(0,str(fecha_select))
 
                 calendario.destroy()
 
@@ -1584,7 +2202,7 @@ class Clientes(CTkToplevel):
             
         
         self.btn_fecha = CTkButton(self,text="...",command=btn_fecha_agregar_cliente, width = 27, height = 27)
-        self.btn_fecha.place(x=950 ,y=310 )
+        self.btn_fecha.place(x=950 ,y=350 )
 
         def agregar_cliente():
             # verifica que no dejen en blanco los campos importantes 
@@ -1640,7 +2258,7 @@ class Clientes(CTkToplevel):
                         )
                     cursor = conn.cursor()
 
-                    sql = """SELECT MAX(id) FROM `pagos`;"""
+                    sql = """SELECT MAX(id_pago) FROM `pagos`;"""
                     cursor.execute(sql)
                     for index in cursor:
                         if index[0] == None:
@@ -1676,7 +2294,7 @@ class Clientes(CTkToplevel):
                         )
                     cursor = conn.cursor()
 
-                    sql = f""" INSERT INTO `pagos`(`fecha`, `id`, `nombre_completo`, `modalidad`, `Trabajador`, `pagar_activacion`, `importe`, `pago_entrenador`) VALUES ('{fecha_actual}','{id_pago}','{self.texto_nombre.get() + " " + self.texto_apellido1.get() + " " + self.texto_apellido2.get()}','{self.texto_modalidad.get()}','{self.texto_entrenador.get()}','NO','{importe}','{entrenador}') """
+                    sql = f""" INSERT INTO `pagos`(`id_pago`,`fecha`, `id`, `nombre_completo`, `modalidad`, `Trabajador`, `pagar_activacion`, `importe`, `pago_entrenador`) VALUES ('{id_pago}','{fecha_actual}','{self.texto_id.get()}','{self.texto_nombre.get() + " " + self.texto_apellido1.get() + " " + self.texto_apellido2.get()}','{self.texto_modalidad.get()}','{self.texto_entrenador.get()}','NO','{importe}','{entrenador}') """
                     cursor.execute(sql)
                     conn.commit()
 
@@ -1685,36 +2303,1212 @@ class Clientes(CTkToplevel):
         self.btn_aceptar = CTkButton(self,text="Agregar Cliente",command=agregar_cliente, width = 150, height = 40)
         self.btn_aceptar.place(x=730 ,y=500 )
         
+
+
+# **********************************************************************************
+# ********************************** Control Pagos *********************************
+# **********************************************************************************
+class ControlPagos(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Control Pagos") 
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 700
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x700")
+        self.resizable(False,False)        
+        self.after(250, lambda: self.iconbitmap('D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico'))  
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/2.jpg"), size = (1000,700))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        ####################################################### 
+
+        self.texto_fecha = CTkEntry(self, placeholder_text="Fecha ...")
+        self.texto_fecha.place(x=50,y=100) 
+
+        self.texto_nombre = CTkEntry(self,placeholder_text="Buscar por Nombre...")
+        self.texto_nombre.place(x=500,y=100) 
+
+        estilos_tablas()        
         
+        self.tabla = ttk.Treeview(self, columns = ("Fecha","Id","Nombre Completo", "Modalidad", "Entrenador", "Importe", "P Entrenador"), show="headings")
+        self.tabla.column("#0", width = 100)
+        self.tabla.column("Fecha", width = 75)
+        self.tabla.column("Id", width = 75)
+        self.tabla.column("Nombre Completo", width = 300)
+        self.tabla.column("Modalidad", width = 100)
+        self.tabla.column("Entrenador", width = 100)        
+        self.tabla.column("Importe", width = 100)        
+        self.tabla.column("P Entrenador", width = 100)        
+
+        self.tabla.place(x = 50, y = 200)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Id")
+        self.tabla.heading("Fecha", text = "Fecha")
+        self.tabla.heading("Id", text = "Id")
+        self.tabla.heading("Nombre Completo", text = "Nombre Completo")
+        self.tabla.heading("Modalidad", text = "Modalidad")
+        self.tabla.heading("Entrenador", text = "Entrenador")
+        self.tabla.heading("Importe", text = "Importe")
+        self.tabla.heading("P Entrenador", text = "P Entrenador")        
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set)
+
+        def btn_fecha(): 
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()              
+
+            def fecha():
+                self.texto_fecha.delete(0,END)
+                self.texto_fecha.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha.insert(0,str(fecha_select)) 
+                calendario.destroy()
+                llenar_tabla(True)
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack()             
+        
+        self.btn_fecha = CTkButton(self,text="...",command=btn_fecha, width = 27, height = 27)
+        self.btn_fecha.place(x=200 ,y=100 )
+        
+        def llenar_tabla(event):
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "root",
+                password = "",
+                database = "gym_98MPH"
+                )
+            cursor = conn.cursor()
+
+            sql = f""" SELECT * FROM `pagos` WHERE `fecha` = "{self.texto_fecha.get()}" AND `nombre_completo` LIKE '%{self.texto_nombre.get()}%' """
+            cursor.execute(sql)
+            for index in cursor:
+                self.tabla.insert("",END, text = index[0], values=(index[1],index[2],index[3],index[4],index[5],index[7],index[8],))
+        
+        self.texto_nombre.bind("<KeyRelease>", llenar_tabla) 
+
+        def on_click(event):
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                
+                id_pago = self.tabla.item(item, "text") 
+
+            # ahora mostrar ventana para decidirr si elimino o modifico
+            temp = CTkToplevel()
+            temp.title("Opcicon") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False))  
+            temp.after(250, lambda: temp.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico')) 
+
+            def modificar():
+                # mostramos la ventana para modificar
+                mod = CTkToplevel()
+                mod.title("Modificar Pago")    
+                htotal = mod.winfo_screenheight()
+                wtotal = mod.winfo_screenwidth()
+                wventana = 1000
+                hventana = 600
+                posx = round(wtotal/2-wventana/2)
+                posy = round(htotal/2-hventana/2)
+                mod.geometry(f"+{posx}+{posy}")
+                mod.geometry("1000x600") 
+                mod.resizable(False,False)
+                mod.after(250, lambda: mod.iconbitmap('D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico'))   
+                mod.lift()
+                mod.attributes('-topmost', True)
+                mod.after(200, lambda: mod.attributes('-topmost', False)) 
+
+                #********************* info
+                mod.label_fecha = CTkLabel(mod,text="Fecha:", font=("Times New Roman",16))
+                mod.label_fecha.place(x = 650, y = 50) 
+                
+                mod.texto_fecha = CTkEntry(mod)
+                mod.texto_fecha.place(x = 800, y = 50)
+
+                # ***************** Botones ************************
+                def btn_fecha(): 
+                    calendario = CTkToplevel()
+                    calendario.title("Calendario") 
+                    htotal = calendario.winfo_screenheight()
+                    wtotal = calendario.winfo_screenwidth()
+                    wventana = 300
+                    hventana = 300
+                    posx = round(wtotal/2-wventana/2)
+                    posy = round(htotal/2-hventana/2)
+                    calendario.geometry(f"+{posx}+{posy}")
+                    calendario.lift()
+                    calendario.attributes('-topmost', True)
+                    calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+                    cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+                    cal.pack()  
+
+                    def fecha():
+                        mod.texto_fecha.delete(0,END)
+                        fecha_select = cal.get_date()
+                        mod.texto_fecha.insert(0,str(fecha_select))
+                        calendario.destroy()
+
+                    btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+                    btn.pack()                 
+                
+                mod.btn_fecha2 = CTkButton(mod,text="...",command=btn_fecha, width = 27, height = 27)
+                mod.btn_fecha2.place(x=950 ,y=50 )
+
+                mod.label_id = CTkLabel(mod,text="Id cliente:", font=("Times New Roman",16))
+                mod.label_id.place(x = 650, y = 90) 
+                
+                mod.texto_id = CTkEntry(mod)
+                mod.texto_id.place(x = 800, y = 90)
+
+                mod.label_nombre = CTkLabel(mod,text="Nombre Completo:", font=("Times New Roman",16))
+                mod.label_nombre.place(x = 650, y = 130) 
+                
+                mod.texto_nombre = CTkEntry(mod)
+                mod.texto_nombre.place(x = 800, y = 130)
+
+                mod.label_modalidad = CTkLabel(mod,text="Modalidad:", font=("Times New Roman",16))
+                mod.label_modalidad.place(x = 650, y = 170)  
+
+                items_modalidad = []
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "root",
+                    password = "",
+                    database = "gym_98MPH"
+                    )
+                cursor = conn.cursor()
+
+                sql = """SELECT `modalidad` FROM `modalidad`"""
+                cursor.execute(sql)
+                for index in cursor:
+                    items_modalidad.append(index[0])
+                
+                mod.texto_modalidad = CTkComboBox(mod, values=items_modalidad)
+                mod.texto_modalidad.set("")              
+                mod.texto_modalidad.place(x = 800, y = 170)  
+
+                mod.label_entrenador = CTkLabel(mod,text="Entrenador:", font=("Times New Roman",16))
+                mod.label_entrenador.place(x = 650, y = 210) 
+
+                items_entrenador = []
+                sql = """SELECT * FROM `entrenadores`"""
+                cursor.execute(sql)
+                for index in cursor:
+                    items_entrenador.append(index[0])
+                
+                mod.texto_entrenador = CTkComboBox(mod,values=items_entrenador)
+                mod.texto_entrenador.set("")
+                mod.texto_entrenador.place(x = 800, y = 210)  
+
+                mod.label_importe = CTkLabel(mod,text="Importe:", font=("Times New Roman",16))
+                mod.label_importe.place(x = 650, y = 250) 
+                
+                mod.texto_importe = CTkEntry(mod)
+                mod.texto_importe.place(x = 800, y = 250)
+
+                mod.label_p_e = CTkLabel(mod,text="Pago Enrenador:", font=("Times New Roman",16))
+                mod.label_p_e.place(x = 650, y = 290) 
+                
+                mod.texto_p_e = CTkEntry(mod)
+                mod.texto_p_e.place(x = 800, y = 290)
+
+                # ahora vamos a mostrar los datos que estaban antes 
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "root",
+                    password = "",
+                    database = "gym_98MPH"
+                    )
+                cursor = conn.cursor()                   
+                sql = f""" SELECT * FROM `pagos` WHERE `id_pago` = {id_pago} """
+                cursor.execute(sql)
+                for index in cursor:
+                    mod.texto_fecha.insert(0,index[1])
+                    mod.texto_id.insert(0,index[2])                    
+                    mod.texto_nombre.insert(0,index[3])                    
+                    mod.texto_modalidad.set(index[4])
+                    mod.texto_entrenador.set(index[5])
+                    mod.texto_importe.insert(0,index[7])
+                    mod.texto_p_e.insert(0,index[8])
+
+                def modificar_pago():
+                     conf = messagebox.askokcancel("Confirmar","Se va a modificar el pago")
+                     if conf:
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "root",
+                            password = "",
+                            database = "gym_98MPH"
+                            )
+                        cursor = conn.cursor()                   
+                        sql = f""" UPDATE `pagos` SET `fecha`='{mod.texto_fecha.get()}',`id`='{mod.texto_id.get()}',`nombre_completo`='{mod.texto_nombre.get()}',`modalidad`='{mod.texto_modalidad.get()}',`Trabajador`='{mod.texto_entrenador.get()}',`importe`='{mod.texto_importe.get()}',`pago_entrenador`='{mod.texto_p_e.get()}' WHERE `id_pago` = {id_pago}"""
+                        cursor.execute(sql)
+                        conn.commit()
+
+                        mod.destroy()
+                        temp.destroy()
+                        llenar_tabla(True)
+
+                mod.btn_moificar = CTkButton(mod,text="Modificar Pago",command=modificar_pago, width = 150, height = 40)
+                mod.btn_moificar.place(x=730 ,y=500 )
+
+            btn1 = CTkButton(temp,text="Modificar",command=modificar)
+            btn1.pack(pady=20)
+
+            def eliminar():
+                conf = messagebox.askokcancel("Eliminar","Se va a eliminar el pago")
+                if conf:
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "root",
+                        password = "",
+                        database = "gym_98MPH"
+                        )
+                    cursor = conn.cursor()                   
+                    sql = f""" DELETE FROM `pagos` WHERE `id_pago` = {id_pago} """
+                    cursor.execute(sql)
+                    conn.commit()                    
+
+                    temp.destroy()
+                    llenar_tabla(True)
+
+            btn2 = CTkButton(temp,text="Eliminar",command=eliminar)
+            btn2.pack(pady=20)
+
+        self.tabla.bind("<Double-1>", on_click)
+
+
+
+# **********************************************************************************
+# ********************************* Ejecutar Extra *********************************
+# **********************************************************************************
+class EjecutarExtra(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Ejecutar Extra") 
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 700
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x700")
+        self.resizable(False,False)        
+        self.after(250, lambda: self.iconbitmap('D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico'))  
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False)) 
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/fondo_agregar_cliente.jpg"), size = (1000,700))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        ####################################################### 
+
+        self.texto_id = CTkEntry(self, placeholder_text="Id cliente ...")
+        self.texto_id.place(x=750,y=100)  
+
+        self.texto_nombre = CTkEntry(self, placeholder_text="Nombre ...")
+        self.texto_nombre.place(x=750,y=140) 
+
+        item_extra = []
+        conn = mysql.connector.connect(
+            host = "localhost",
+            user = "root",
+            password = "",
+            database = "gym_98mph"
+            )
+        cursor = conn.cursor()
+
+        sql = """ SELECT `extra` FROM `extra` """
+        cursor.execute(sql)
+        for index in cursor:
+            item_extra.append(index[0])
+
+        self.texto_extra = CTkComboBox(self, values=item_extra)
+        self.texto_extra.set("Extra ...")
+        self.texto_extra.place(x=750,y=180)
+
+        item_trabajador = []
+        conn = mysql.connector.connect(
+            host = "localhost",
+            user = "root",
+            password = "",
+            database = "gym_98mph"
+            )
+        cursor = conn.cursor()
+
+        sql = """ SELECT * FROM `entrenadores` """
+        cursor.execute(sql)
+        for index in cursor:
+            item_trabajador.append(index[0])
+
+        self.texto_trabajador = CTkComboBox(self, values=item_trabajador)
+        self.texto_trabajador.set("Trabajador ...")
+        self.texto_trabajador.place(x=750,y=220)
+
+        def ejecutar_extra():
+            conf = messagebox.askokcancel("Confirmar", "Se va a ejecutar el extra")
+            if conf:
+                # ************ buscamos el id del pago 
+                id_pago = 1
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "root",
+                    password = "",
+                    database = "gym_98MPH"
+                    )
+                cursor = conn.cursor()
+
+                sql = """SELECT MAX(id_pago) FROM `pagos`;"""
+                cursor.execute(sql)
+                for index in cursor:
+                    if index[0] == None:
+                        pass
+
+                    else:
+                        id_pago = index[0] + 1  
+
+                # ****************** buscamos el importe y pago al entrenador 
+                importe = 0
+                p_e = 0
+
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "root",
+                    password = "",
+                    database = "gym_98MPH"
+                    )
+                cursor = conn.cursor()
+
+                sql = f""" SELECT * FROM `extra` WHERE `extra` = "{self.texto_extra.get()}" """
+                cursor.execute(sql)
+                for index in cursor:
+                    importe = index[1]
+                    p_e = index[2]
+
+
+                # cuando el id es de un cliente enonces se toma el nombre de la bd, si el id es 0 entonces se usa el campo
+                nombre_completo = ""
+                if self.texto_id.get() == 0:
+                    nombre_completo = self.texto_nombre.get()
+
+                else:
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "root",
+                        password = "",
+                        database = "gym_98mph"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = f""" SELECT  `Nombre`, `Apellido 1`, `Apellido 2` FROM `clientes` WHERE `ID` = {self.texto_id.get()} """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        nombre_completo = index[0] + " " + index[1] + " " + index[2]
+
+
+
+                # ***************** ejecutamos el pago
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "root",
+                    password = "",
+                    database = "gym_98mph"
+                    )
+                cursor = conn.cursor()
+
+                sql = f""" INSERT INTO `pagos`(`id_pago`, `fecha`, `id`, `nombre_completo`, `modalidad`, `Trabajador`, `pagar_activacion`, `importe`, `pago_entrenador`) VALUES ('{id_pago}','{fecha_actual}','{self.texto_id.get()}','{nombre_completo}','{self.texto_extra.get()}','{self.texto_trabajador.get()}','NO','{importe}','{p_e}') """
+                cursor.execute(sql)
+                conn.commit()
+
+                self.destroy()
+
+        self.btn_ejecutar = CTkButton(self,text="Ejecutar",command=ejecutar_extra)
+        self.btn_ejecutar.place(x=750,y=300)
 
 
 
 
 
+# **********************************************************************************
+# ************************************ Atrasados ***********************************
+# **********************************************************************************
+class Atrasados(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Atrasados") 
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 700
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x700")
+        self.resizable(False,False)        
+        self.after(250, lambda: self.iconbitmap('D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico'))  
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False)) 
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/logo3.jpg"), size = (1000,700))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################  
+
+        estilos_tablas()        
+        
+        self.tabla = ttk.Treeview(self, columns = ("Nombre Completo", "Modalidad", "Entrenador", "Debe Pagar", "Atraso"))
+        self.tabla.column("#0", width = 100)       
+        self.tabla.column("Nombre Completo", width = 300)
+        self.tabla.column("Modalidad", width = 100)
+        self.tabla.column("Entrenador", width = 100)        
+        self.tabla.column("Debe Pagar", width = 100)        
+        self.tabla.column("Atraso", width = 150)        
+
+        self.tabla.place(x = 50, y = 200)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Id")        
+        self.tabla.heading("Nombre Completo", text = "Nombre Completo")
+        self.tabla.heading("Modalidad", text = "Modalidad")
+        self.tabla.heading("Entrenador", text = "Entrenador")
+        self.tabla.heading("Debe Pagar", text = "Debe Pagar")
+        self.tabla.heading("Atraso", text = "Atraso (Dias)")        
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set)
+
+        self.texto_nombre = CTkEntry(self, placeholder_text="Nombre ...")
+        self.texto_nombre.place(x=50,y=100) 
+
+        def llenar_tabla(event):
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "root",
+                password = "",
+                database = "gym_98MPH"
+                )
+            cursor = conn.cursor()
+
+            sql = f""" SELECT `ID`, `Nombre`, `Apellido 1`, `Apellido 2`, `Modalidad`, `Trabajador`, `Fecha_Pago` FROM `clientes` WHERE `Fecha_Pago` < "{fecha_actual}" AND (`Nombre` LIKE '%{self.texto_nombre.get()}%' OR `Apellido 1` LIKE '%{self.texto_nombre.get()}%' OR `Apellido 2` LIKE '%{self.texto_nombre.get()}%') """
+            cursor.execute(sql)
+            for index in cursor:                   
+                self.tabla.insert("",END, text = index[0], values=(index[1] + " " + index[2] + " " + index[3],index[4],index[5],index[6],(fecha_actual - index[6]).days,))                
+
+        llenar_tabla(True)
+
+        self.texto_nombre.bind("<KeyRelease>", llenar_tabla) 
+
+        # ahora vamos a hacer el boton de exportar esa tabla 
+        def exportar():
+            try:
+                rows = []
+                for item in self.tabla.get_children():
+                    # Obtener el text (primera columna) y los values (resto de columnas)
+                    text = self.tabla.item(item)['text']
+                    values = self.tabla.item(item)['values']
+                    
+                    # Combinar text + values en una sola fila
+                    rows.append([text] + list(values))
+
+                # Ajustar los nombres de columnas: ahora la primera es la del text
+                df = pd.DataFrame(rows, columns=["ID", "Nombre Completo", "Modalidad", "Entrenador", "Debe Pagar", "Atraso (Dias)"])      
+                
+                # Nombre sugerido del archivo
+                nombre_sugerido = "atrasados.xlsx"
+                
+                # Diálogo para guardar archivo
+                ruta_guardado = filedialog.asksaveasfilename(
+                    defaultextension=".xlsx",
+                    filetypes=[
+                        ("Archivos de Excel", "*.xlsx"),
+                        ("Todos los archivos", "*.*")
+                    ],
+                    initialfile=nombre_sugerido,
+                    title="Guardar archivo Excel"
+                )
+                
+                # Si el usuario seleccionó una ruta (no canceló)
+                if ruta_guardado:
+                    df.to_excel(ruta_guardado, index=False)
+                    messagebox.showinfo("Exportar", f"¡Exportado exitosamente!\n\nGuardado en:\n{ruta_guardado}")
+                else:
+                    messagebox.showinfo("Cancelado", "Exportación cancelada")
+
+            except Exception as e:
+                messagebox.showerror("Error", f"No se pudo exportar:\n{str(e)}")
+
+
+        self.btn = CTkButton(self,text="Exportar",command=exportar)
+        self.btn.place(x=50,y=500)
 
 
 
 
 
+# **********************************************************************************
+# ****************************** Pago Entrenadores *********************************
+# **********************************************************************************
+class PagoEntrenadores(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Pago Entrenadores") 
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 700
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x700")
+        self.resizable(False,False)        
+        self.after(250, lambda: self.iconbitmap('D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico'))  
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/modificar cliente.jpg"), size = (1000,700))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        ####################################################### 
+
+        estilos_tablas()        
+        
+        self.tabla = ttk.Treeview(self, columns = ("Fecha","Id", "Nombre Completo", "Modalidad", "Entrenador", "Importe", "P Entrenador"),show="headings")
+        self.tabla.column("#0", width = 100, anchor="center")       
+        self.tabla.column("Fecha", width = 100, anchor="center")       
+        self.tabla.column("Id", width = 100, anchor="center")       
+        self.tabla.column("Nombre Completo", width = 300, anchor="center")
+        self.tabla.column("Modalidad", width = 100, anchor="center")
+        self.tabla.column("Entrenador", width = 100, anchor="center")        
+        self.tabla.column("Importe", width = 100, anchor="center")        
+        self.tabla.column("P Entrenador", width = 150, anchor="center")        
+
+        self.tabla.place(x = 50, y = 200)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Id_Pago", anchor="center")        
+        self.tabla.heading("Fecha", text = "Fecha", anchor="center")
+        self.tabla.heading("Id", text = "Id", anchor="center")
+        self.tabla.heading("Nombre Completo", text = "Nombre Completo", anchor="center")
+        self.tabla.heading("Modalidad", text = "Modalidad", anchor="center")
+        self.tabla.heading("Entrenador", text = "Entrenador", anchor="center")
+        self.tabla.heading("Importe", text = "Importe", anchor="center")
+        self.tabla.heading("P Entrenador", text = "P Entrenador", anchor="center")        
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set)        
+
+        def llenar_tabla():
+            v = 0
+            b = 0
+            i = 0
+            e = 0
+            t = 0            
+            self.tabla.delete(*self.tabla.get_children())
+
+            #******************** calculemos los totales 
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "root",
+                password = "",
+                database = "gym_98MPH"
+                )
+            cursor = conn.cursor()
+
+            sql = f""" SELECT * FROM `pagos` WHERE `fecha` >= "{self.texto_fecha_inicial.get()}" AND `fecha` < "{self.texto_fecha_final.get()}" AND `Trabajador` = "{self.texto_enrenador.get()}" """
+            cursor.execute(sql)
+            for index in cursor: 
+                t+=index[8] 
+
+                if index[4] == "Vip":
+                    v+=index[8]
+
+                elif index[4] == "Basico": 
+                    b += index[8]
+
+                elif index[4] == "Invitados":
+                    i += index[8]
+
+                else:
+                    e += index[8]
+                
+                              
+                self.tabla.insert("",END, text = index[0], values=(index[1],index[2],index[3],index[4],index[5],index[7],index[8],))     
 
 
+            # llevemos los totales a los labels
+            total_vip.set(f"Vip: {v}")
+            total_basico.set(f"Basico: {b}")
+            total_invitados.set(f"Invitados: {i}")
+            total_extra.set(f"Extra: {e}")
+            total.set(f"Total: {t}")
+
+        
+        self.texto_fecha_inicial = CTkEntry(self,placeholder_text="Fecha inicial ...")
+        self.texto_fecha_inicial.insert(0,fecha_actual)
+        self.texto_fecha_inicial.place(x=100,y=60) 
+
+        def fecha_inicial():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_inicial.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_inicial.insert(0,str(fecha_select)) 
+                llenar_tabla()
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack() 
 
 
+        self.btn_fecha_inicial = CTkButton(self,text="...",command=fecha_inicial, width = 27, height = 27)
+        self.btn_fecha_inicial.place(x=250 ,y=60 )
+
+        self.texto_fecha_final = CTkEntry(self,placeholder_text="Fecha final ...")
+        self.texto_fecha_final.insert(0,fecha_actual + timedelta(days=1))
+        self.texto_fecha_final.place(x=100,y=100) 
+
+        def fecha_final():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_final.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_final.insert(0,str(fecha_select)) 
+                llenar_tabla()
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack()
 
 
+        self.btn_fecha_final = CTkButton(self,text="...",command=fecha_final, width = 27, height = 27)
+        self.btn_fecha_final.place(x=250 ,y=100 )
+
+        items_entrenador = []
+        sql = """SELECT * FROM `entrenadores`"""
+        cursor.execute(sql)
+        for index in cursor:
+            items_entrenador.append(index[0])
+
+        def escoger_entrenador(event):
+            llenar_tabla()
+
+        self.texto_enrenador = CTkComboBox(self,values=items_entrenador,command=escoger_entrenador)
+        self.texto_enrenador.set("Entrenador") 
+        self.texto_enrenador.place(x=650,y=100) 
+
+        # ahora vamos a configurar los totales que se muestran 
+        total_vip = StringVar()
+        total_vip.set("Vip: 0")
+
+        self.label_vip = CTkLabel(self,textvariable=total_vip)
+        self.label_vip.place(x=100,y=420)
+
+        total_basico = StringVar()
+        total_basico.set("Basico: 0")
+
+        self.label_basico = CTkLabel(self,textvariable=total_basico)
+        self.label_basico.place(x=100,y=460)
+
+        total_invitados = StringVar()
+        total_invitados.set("Invitados: 0")
+
+        self.label_invitados = CTkLabel(self,textvariable=total_invitados)
+        self.label_invitados.place(x=100,y=500)
+
+        total_extra = StringVar()
+        total_extra.set("Extra: 0")
+
+        self.label_extra = CTkLabel(self,textvariable=total_extra)
+        self.label_extra.place(x=100,y=540)
+
+        total = StringVar()
+        total.set("Total: 0")
+
+        self.label_total = CTkLabel(self,textvariable=total)
+        self.label_total.place(x=100,y=580)
+
+        # ahora el boton de exportar la tabla 
+        def exportar():
+            try:
+                if not self.tabla.get_children():
+                    messagebox.showwarning("Sin datos", "No hay datos para exportar")
+                    return
+                
+                rows = []
+                for item in self.tabla.get_children():
+                    values = self.tabla.item(item)['values']
+                    rows.append(list(values))
+
+                # DataFrame con las columnas que necesitas
+                df = pd.DataFrame(rows, columns=["Fecha", "Id", "Nombre Completo", "Modalidad", "Entrenador", "Importe", "P Entrenador"])
+                
+                # Convertir columnas numéricas (si es necesario)
+                df["Importe"] = pd.to_numeric(df["Importe"], errors='coerce')
+                df["P Entrenador"] = pd.to_numeric(df["P Entrenador"], errors='coerce')
+                
+                # Calcular totales
+                total_importe = df["Importe"].sum()
+                total_p_entrenador = df["P Entrenador"].sum()
+                
+                # Agregar una fila vacía
+                fila_vacia = pd.DataFrame([[""] * len(df.columns)], columns=df.columns)
+                
+                # Agregar fila de totales
+                fila_totales = pd.DataFrame([["TOTAL", "", "", "", "", total_importe, total_p_entrenador]], columns=df.columns)
+                
+                # Concatenar: datos originales + fila vacía + totales
+                df_final = pd.concat([df, fila_vacia, fila_totales], ignore_index=True)
+                
+                # Nombre sugerido del archivo
+                nombre_sugerido = f"Pago {self.texto_enrenador.get()} {fecha_actual}.xlsx"
+                
+                # Diálogo para guardar archivo
+                ruta_guardado = filedialog.asksaveasfilename(
+                    defaultextension=".xlsx",
+                    filetypes=[
+                        ("Archivos de Excel", "*.xlsx"),
+                        ("Todos los archivos", "*.*")
+                    ],
+                    initialfile=nombre_sugerido,
+                    title="Guardar archivo Excel"
+                )
+                
+                if ruta_guardado:
+                    df_final.to_excel(ruta_guardado, index=False)
+                    messagebox.showinfo("Exportar", f"¡Exportado exitosamente!\n\nGuardado en:\n{ruta_guardado}")
+                else:
+                    messagebox.showinfo("Cancelado", "Exportación cancelada")
+
+            except Exception as e:
+                messagebox.showerror("Error", f"No se pudo exportar:\n{str(e)}")
+
+        self.btn = CTkButton(self,text="Exportar",command=exportar)
+        self.btn.place(x=600,y=500)
 
 
+# **********************************************************************************
+# ************************************** Balance ***********************************
+# **********************************************************************************
+class Balance(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Balance") 
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 700
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x700")
+        self.resizable(False,False)        
+        self.after(250, lambda: self.iconbitmap('D:/gym_98MPH/fotos_gym/gym_fondos/logo1.ico'))  
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/1.jpg"), size = (1000,700))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        ####################################################### 
+
+        estilos_tablas()        
+        
+        self.tabla = ttk.Treeview(self, columns = ("Fecha","Id", "Nombre Completo", "Modalidad", "Entrenador", "Importe", "P Entrenador"),show="headings")
+        self.tabla.column("#0", width = 100, anchor="center")       
+        self.tabla.column("Fecha", width = 100, anchor="center")       
+        self.tabla.column("Id", width = 100, anchor="center")       
+        self.tabla.column("Nombre Completo", width = 300, anchor="center")
+        self.tabla.column("Modalidad", width = 100, anchor="center")
+        self.tabla.column("Entrenador", width = 100, anchor="center")        
+        self.tabla.column("Importe", width = 100, anchor="center")        
+        self.tabla.column("P Entrenador", width = 150, anchor="center")        
+
+        self.tabla.place(x = 50, y = 200)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Id_Pago", anchor="center")        
+        self.tabla.heading("Fecha", text = "Fecha", anchor="center")
+        self.tabla.heading("Id", text = "Id", anchor="center")
+        self.tabla.heading("Nombre Completo", text = "Nombre Completo", anchor="center")
+        self.tabla.heading("Modalidad", text = "Modalidad", anchor="center")
+        self.tabla.heading("Entrenador", text = "Entrenador", anchor="center")
+        self.tabla.heading("Importe", text = "Importe", anchor="center")
+        self.tabla.heading("P Entrenador", text = "P Entrenador", anchor="center")        
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set) 
+
+        def llenar_tabla():
+            v = 0
+            b = 0
+            i = 0
+            e = 0
+            t = 0   
+
+            ent_v = 0
+            ent_b = 0
+            ent_i = 0
+            ent_e = 0
+            ent_t = 0   
+
+            self.tabla.delete(*self.tabla.get_children())
+
+            #******************** calculemos los totales 
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "root",
+                password = "",
+                database = "gym_98MPH"
+                )
+            cursor = conn.cursor()
+
+            sql = f""" SELECT * FROM `pagos` WHERE `fecha` >= "{self.texto_fecha_inicial.get()}" AND `fecha` < "{self.texto_fecha_final.get()}" """
+            cursor.execute(sql)
+            for index in cursor: 
+                # calculamos los totales
+                t+=index[7] 
+
+                if index[4] == "Vip":
+                    v+=index[7]
+
+                elif index[4] == "Basico": 
+                    b += index[7]
+
+                elif index[4] == "Invitados":
+                    i += index[7]
+
+                else:
+                    e += index[7]  
+
+                # calculamos los totales de los entrenadores
+                ent_t+=index[8] 
+
+                if index[4] == "Vip":
+                    ent_v+=index[8]
+
+                elif index[4] == "Basico": 
+                    ent_b += index[8]
+
+                elif index[4] == "Invitados":
+                    ent_i += index[8]
+
+                else:
+                    ent_e += index[8]                                
+                              
+                self.tabla.insert("",END, text = index[0], values=(index[1],index[2],index[3],index[4],index[5],index[7],index[8],))  
+
+            # llevemos los totales a los labels
+            total_vip.set(f"Vip: {v}")
+            total_basico.set(f"Basico: {b}")
+            total_invitados.set(f"Invitados: {i}")
+            total_extra.set(f"Extra: {e}")
+            total.set(f"Total: {t}")
+
+            # llevemos los totales de los entrenadores
+            ent_vip.set(f"Vip: {ent_v}")
+            ent_basico.set(f"Basico: {ent_b}")
+            ent_invitados.set(f"Invitados: {ent_i}")
+            ent_extra.set(f"Extra: {ent_e}")
+            ent.set(f"Total: {ent_t}")
 
 
+        self.texto_fecha_inicial = CTkEntry(self,placeholder_text="Fecha inicial ...")
+        self.texto_fecha_inicial.insert(0,fecha_actual)
+        self.texto_fecha_inicial.place(x=100,y=60) 
+
+        def fecha_inicial():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_inicial.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_inicial.insert(0,str(fecha_select)) 
+                llenar_tabla()
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack() 
 
 
+        self.btn_fecha_inicial = CTkButton(self,text="...",command=fecha_inicial, width = 27, height = 27)
+        self.btn_fecha_inicial.place(x=250 ,y=60 )
+
+        self.texto_fecha_final = CTkEntry(self,placeholder_text="Fecha final ...")
+        self.texto_fecha_final.insert(0,fecha_actual + timedelta(days=1))
+        self.texto_fecha_final.place(x=100,y=100) 
+
+        def fecha_final():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_final.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_final.insert(0,str(fecha_select)) 
+                llenar_tabla()
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack()
 
 
+        self.btn_fecha_final = CTkButton(self,text="...",command=fecha_final, width = 27, height = 27)
+        self.btn_fecha_final.place(x=250 ,y=100 )
+
+        # ahora vamos a configurar los totales que se muestran 
+        self.label1 = CTkLabel(self,text="---------- Totales ----------")
+        self.label1.place(x=100,y=420)
+        
+        total_vip = StringVar()
+        total_vip.set("Vip: 0")
+
+        self.label_vip = CTkLabel(self,textvariable=total_vip)
+        self.label_vip.place(x=100,y=460)
+
+        total_basico = StringVar()
+        total_basico.set("Basico: 0")
+
+        self.label_basico = CTkLabel(self,textvariable=total_basico)
+        self.label_basico.place(x=100,y=500)
+
+        total_invitados = StringVar()
+        total_invitados.set("Invitados: 0")
+
+        self.label_invitados = CTkLabel(self,textvariable=total_invitados)
+        self.label_invitados.place(x=100,y=540)
+
+        total_extra = StringVar()
+        total_extra.set("Extra: 0")
+
+        self.label_extra = CTkLabel(self,textvariable=total_extra)
+        self.label_extra.place(x=100,y=580)
+
+        total = StringVar()
+        total.set("Total: 0")
+
+        self.label_total = CTkLabel(self,textvariable=total)
+        self.label_total.place(x=100,y=620)
 
 
+        # ahora vamos a configurar los totales que muestran lo que ganaron todos los entrenadores 
+        self.label2 = CTkLabel(self,text="---------- Entrenadores ----------")
+        self.label2.place(x=300,y=420)
+
+        ent_vip = StringVar()
+        ent_vip.set("Vip: 0")
+
+        self.label_ent_vip = CTkLabel(self,textvariable=ent_vip)
+        self.label_ent_vip.place(x=300,y=460)
+
+        ent_basico = StringVar()
+        ent_basico.set("Basico: 0")
+
+        self.label_ent_basico = CTkLabel(self,textvariable=ent_basico)
+        self.label_ent_basico.place(x=300,y=500)
+
+        ent_invitados = StringVar()
+        ent_invitados.set("Invitados: 0")
+
+        self.label_ent_invitados = CTkLabel(self,textvariable=ent_invitados)
+        self.label_ent_invitados.place(x=300,y=540)
+
+        ent_extra = StringVar()
+        ent_extra.set("Extra: 0")
+
+        self.label_ent_extra = CTkLabel(self,textvariable=ent_extra)
+        self.label_ent_extra.place(x=300,y=580)
+
+        ent = StringVar()
+        ent.set("Total: 0")
+
+        self.label_ent_total = CTkLabel(self,textvariable=ent)
+        self.label_ent_total.place(x=300,y=620)
+
+        # ahora el boton de exportar la tabla 
+        def exportar():
+            try:
+                if not self.tabla.get_children():
+                    messagebox.showwarning("Sin datos", "No hay datos para exportar")
+                    return
+                
+                rows = []
+                for item in self.tabla.get_children():
+                    values = self.tabla.item(item)['values']
+                    rows.append(list(values))
+
+                # DataFrame con las columnas que necesitas
+                df = pd.DataFrame(rows, columns=["Fecha", "Id", "Nombre Completo", "Modalidad", "Entrenador", "Importe", "P Entrenador"])
+                
+                # Convertir columnas numéricas (si es necesario)
+                df["Importe"] = pd.to_numeric(df["Importe"], errors='coerce')
+                df["P Entrenador"] = pd.to_numeric(df["P Entrenador"], errors='coerce')
+                
+                # Calcular totales
+                total_importe = df["Importe"].sum()
+                total_p_entrenador = df["P Entrenador"].sum()
+                
+                # Agregar una fila vacía
+                fila_vacia = pd.DataFrame([[""] * len(df.columns)], columns=df.columns)
+                
+                # Agregar fila de totales
+                fila_totales = pd.DataFrame([["TOTAL", "", "", "", "", total_importe, total_p_entrenador]], columns=df.columns)
+                
+                # Concatenar: datos originales + fila vacía + totales
+                df_final = pd.concat([df, fila_vacia, fila_totales], ignore_index=True)
+                
+                # Nombre sugerido del archivo
+                nombre_sugerido = f"Balance {fecha_actual}.xlsx"
+                
+                # Diálogo para guardar archivo
+                ruta_guardado = filedialog.asksaveasfilename(
+                    defaultextension=".xlsx",
+                    filetypes=[
+                        ("Archivos de Excel", "*.xlsx"),
+                        ("Todos los archivos", "*.*")
+                    ],
+                    initialfile=nombre_sugerido,
+                    title="Guardar archivo Excel"
+                )
+                
+                if ruta_guardado:
+                    df_final.to_excel(ruta_guardado, index=False)
+                    messagebox.showinfo("Exportar", f"¡Exportado exitosamente!\n\nGuardado en:\n{ruta_guardado}")
+                else:
+                    messagebox.showinfo("Cancelado", "Exportación cancelada")
+
+            except Exception as e:
+                messagebox.showerror("Error", f"No se pudo exportar:\n{str(e)}")
 
 
+        self.btn = CTkButton(self,text="Exportar",command=exportar)
+        self.btn.place(x=600,y=500)
 
+        llenar_tabla()
 
 
 
