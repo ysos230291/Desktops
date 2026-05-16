@@ -12,6 +12,7 @@ import pandas as pd
 from tkcalendar import *
 import copy
 from dateutil.relativedelta import relativedelta
+import os
 
 fecha_actual = datetime.now().date()
 fecha_hora_actual = datetime.now()
@@ -690,6 +691,46 @@ class Lobby(CTkToplevel):
         def clientes_lobby():
             nc = Clientes()
 
+        def salva_lobby():           
+            
+            # Abrir diálogo para elegir dónde guardar el respaldo
+            ruta_guardado = filedialog.asksaveasfilename(
+                defaultextension=".sql",
+                filetypes=[
+                    ("Archivos SQL", "*.sql"),
+                    ("Todos los archivos", "*.*")
+                ],
+                initialfile=f"gym_98mph_{fecha_actual}.sql",
+                title="Guardar respaldo de la base de datos"
+            )
+            
+            # Si el usuario canceló, salir
+            if not ruta_guardado:
+                return
+            
+            try:
+                # Ruta de mysqldump en XAMPP (ajusta si es necesario)
+                ruta_mysqldump = "C:/xampp/mysql/bin/mysqldump.exe"
+                
+                # Comando correcto: mysqldump -u root gym_98mph > archivo.sql
+                comando = f'"{ruta_mysqldump}" -u root gym_98mph > "{ruta_guardado}"'
+                
+                # Ejecutar el comando
+                resultado = subprocess.run(comando, shell=True, capture_output=True, text=True)
+                
+                # Verificar que el archivo se creó y tiene contenido
+                if os.path.exists(ruta_guardado) and os.path.getsize(ruta_guardado) > 0:
+                    tamaño_kb = os.path.getsize(ruta_guardado) / 1024
+                    messagebox.showinfo("Éxito", f"✅ Respaldo creado exitosamente!\n\n📁 Archivo: {ruta_guardado}\n📊 Tamaño: {tamaño_kb:.2f} KB")
+                else:
+                    error_msg = resultado.stderr if resultado.stderr else "No se pudo crear el respaldo"
+                    messagebox.showerror("Error", f"❌ Error al crear respaldo:\n{error_msg}")
+                    
+            except FileNotFoundError:
+                messagebox.showerror("Error", "No se encontró mysqldump.exe\nVerifica la ruta: C:/xampp/mysql/bin/mysqldump.exe")
+            except Exception as e:
+                messagebox.showerror("Error", f"❌ Error al crear respaldo:\n{str(e)}")
+
 
         self.menu.add_cascade (label="Recepcion", command=asistencia_pago_cliente_lobby)
         self.menu.add_cascade (label="Extras", command=ejecutar_extra_lobby)
@@ -697,6 +738,7 @@ class Lobby(CTkToplevel):
         self.menu.add_cascade (label="Clientes", command = clientes_lobby) 
         self.menu.add_cascade (label="Economia", menu = economia_menu)               
         self.menu.add_cascade (label="Administrativo", menu = administrativo_menu)               
+        self.menu.add_cascade (label="Salva", command=salva_lobby)               
         self.menu.add_cascade(label="Usuarios", menu = usuario_menu)
         self.menu.add_cascade(label = "Licencia", command= agregar_nueva_licencia)
         self.menu.add_cascade(label="Cerrar", command = cerrar_cesion)
@@ -976,7 +1018,15 @@ class AsistenciaYPago(CTkToplevel):
                     string_entrenador.set("Entrenador: " + index[5]) 
                     string_pago.set("Paga: " + str(index[8])) 
                     string_ultima_asistencia.set("Ultima Asistencia: " + str(index[7])) 
-                    string_telefono.set("Telefono: " + str(index[6]))               
+                    string_telefono.set("Telefono: " + str(index[6]))                     
+
+                    # para que se ponga en rojo si esta atrasado
+                    if fecha_actual > index[8]:
+                        self.label_pago.configure(fg_color="red")   
+
+                    else:
+                        self.label_pago.configure(fg_color="transparent")                
+
 
                 # mostramos la foto del cliente 
 
@@ -1116,6 +1166,10 @@ class AsistenciaYPago(CTkToplevel):
 
         # ahora vamos a mostrar el boton de asistencia 
         def asistencia():
+            global fecha_hora_actual
+            fecha_hora_actual = datetime.now()
+            fecha_hora_actual = fecha_hora_actual.strftime("%Y-%m-%d %I:%M:%S %p")
+
             conf = messagebox.askokcancel("Confirmar","Se va a tomar la asistencia")
             if conf:
                 conn = mysql.connector.connect(
@@ -1865,6 +1919,15 @@ class Clientes(CTkToplevel):
                 mod.attributes('-topmost', True)
                 mod.after(200, lambda: mod.attributes('-topmost', False)) 
 
+                ############ agregar el fondo de pantalla #########
+      
+                mod.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/1.jpg"), size = (1000,600))  
+
+                mod.label_image = CTkLabel(mod, image = mod.imagen, text = "")  
+                mod.label_image.place(x = 0, y = 0)      
+
+                ####################################################### 
+
                 # ******************* modificar cliente 
                 mod.label_id = CTkLabel(mod,text="ID:", font=("Times New Roman",16))
                 mod.label_id.place(x = 738, y = 70)   
@@ -2066,7 +2129,11 @@ class Clientes(CTkToplevel):
 
         self.tabla.bind("<Double-1>", on_click)
 
-        # ************************** Seccion Agregar cliente  *************************      
+        # ************************** Seccion Agregar cliente  *************************  
+        global fecha_hora_actual
+        fecha_hora_actual = datetime.now()
+        fecha_hora_actual = fecha_hora_actual.strftime("%Y-%m-%d %I:%M:%S %p")  
+
         self.label2 = CTkLabel(self,text="-------------------- Agregar Cliente --------------------", font=("Times New Roman",16))
         self.label2.place(x = 650, y = 30)  
 
@@ -2456,6 +2523,15 @@ class ControlPagos(CTkToplevel):
                 mod.lift()
                 mod.attributes('-topmost', True)
                 mod.after(200, lambda: mod.attributes('-topmost', False)) 
+
+                ############ agregar el fondo de pantalla #########
+      
+                mod.imagen = CTkImage (light_image = Image.open("D:/gym_98MPH/fotos_gym/gym_fondos/1.jpg"), size = (1000,600))  
+
+                mod.label_image = CTkLabel(mod, image = mod.imagen, text = "")  
+                mod.label_image.place(x = 0, y = 0)      
+
+                ####################################################### 
 
                 #********************* info
                 mod.label_fecha = CTkLabel(mod,text="Fecha:", font=("Times New Roman",16))
