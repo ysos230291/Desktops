@@ -2810,10 +2810,8 @@ class EjecutarExtra(CTkToplevel):
 
 
                 # cuando el id es de un cliente enonces se toma el nombre de la bd, si el id es 0 entonces se usa el campo                
-                if int(self.texto_id.get()) == 0:
-                    print("entro")
-                    nombre_completo = self.texto_nombre.get()  
-                    print(nombre_completo)                  
+                if int(self.texto_id.get()) == 0:                    
+                    nombre_completo = self.texto_nombre.get()                                 
 
                 else:
                     conn = mysql.connector.connect(
