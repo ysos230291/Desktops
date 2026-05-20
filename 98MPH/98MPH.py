@@ -2412,7 +2412,7 @@ class ControlPagos(CTkToplevel):
         
         self.tabla = ttk.Treeview(self, columns = ("Fecha","Id","Nombre Completo", "Modalidad", "Entrenador", "Importe", "P Entrenador"), show="headings")
         self.tabla.column("#0", width = 100)
-        self.tabla.column("Fecha", width = 75)
+        self.tabla.column("Fecha", width = 100)
         self.tabla.column("Id", width = 75)
         self.tabla.column("Nombre Completo", width = 300)
         self.tabla.column("Modalidad", width = 100)
@@ -2768,6 +2768,7 @@ class EjecutarExtra(CTkToplevel):
         self.texto_trabajador.place(x=750,y=220)
 
         def ejecutar_extra():
+            nombre_completo = ""
             conf = messagebox.askokcancel("Confirmar", "Se va a ejecutar el extra")
             if conf:
                 # ************ buscamos el id del pago 
@@ -2808,10 +2809,11 @@ class EjecutarExtra(CTkToplevel):
                     p_e = index[2]
 
 
-                # cuando el id es de un cliente enonces se toma el nombre de la bd, si el id es 0 entonces se usa el campo
-                nombre_completo = ""
-                if self.texto_id.get() == 0:
-                    nombre_completo = self.texto_nombre.get()
+                # cuando el id es de un cliente enonces se toma el nombre de la bd, si el id es 0 entonces se usa el campo                
+                if int(self.texto_id.get()) == 0:
+                    print("entro")
+                    nombre_completo = self.texto_nombre.get()  
+                    print(nombre_completo)                  
 
                 else:
                     conn = mysql.connector.connect(
