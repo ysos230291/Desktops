@@ -318,7 +318,16 @@ class Autenticacion(CTk):
         self.geometry(f"+{posx}+{posy}")
         self.geometry("400x200")
         self.resizable(False,False)            
-        self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')        
+        self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico')     
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo5.jpg"), size = (400,200))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################
 
         ################# textos y entradas ##################
 
@@ -460,7 +469,16 @@ class NuevaLicencia(CTkToplevel):
         self.resizable(False,False)
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))        
+        self.after(200, lambda: self.attributes('-topmost', False))    
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo5.jpg"), size = (300,200))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################    
 
         self.label = CTkLabel(self, text = "Introduzca la licencia nueva", font=("Times New Roman",14))
         self.label.place(x = 60 , y = 20)        
@@ -604,6 +622,15 @@ class Lobby(CTkToplevel):
         self.geometry(f"+{posx}+{posy}")
         self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))
         self.resizable(False,False)          
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo1.jpg"), size = (1300,700))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################
         
         firma = "Vence (" + str(fecha_vencimiento) + ")"
         self.label_triplem = CTkLabel(self, text = firma, font=("Times New Roman",16))
@@ -975,7 +1002,16 @@ class UsuarioAgregar(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))  
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))        
+        self.after(200, lambda: self.attributes('-topmost', False))
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo2.jpg"), size = (400,300))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################        
 
         # *********************** Label ****************************************
 
@@ -1057,7 +1093,16 @@ class EliminarUsuario(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))  
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))           
+        self.after(200, lambda: self.attributes('-topmost', False))      
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo2.jpg"), size = (400,300))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################     
         
         items_usuarios = []
 
@@ -1155,7 +1200,16 @@ class NuevoProducto(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))   
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))        
+        self.after(200, lambda: self.attributes('-topmost', False))    
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo.jpg"), size = (600,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################    
 
         # ************************** Labels *************************        
 
@@ -1171,7 +1225,7 @@ class NuevoProducto(CTkToplevel):
         self.texto_nombre = CTkEntry(self)
         self.texto_nombre.place(x = 750, y = 110)       
 
-        self.label_costo_usd = CTkLabel(self,text="Costo Lote Usd:", font=("Times New Roman",16))
+        self.label_costo_usd = CTkLabel(self,text="Costo Fijo:", font=("Times New Roman",16))
         self.label_costo_usd.place(x = 630, y = 150)  
 
         self.texto_costo_usd = CTkEntry(self)
@@ -1249,14 +1303,23 @@ class NuevoProducto(CTkToplevel):
         self.btn_cambio = CTkButton(self,text="...", width=30,command=cambio)      
         self.btn_cambio.place(x = 900, y = 150)  
 
+        self.label_costo_usd_variable = CTkLabel(self,text="Costo Variable:", font=("Times New Roman",16))
+        self.label_costo_usd_variable.place(x = 630, y = 190)  
+
+        self.texto_costo_usd_variable = CTkEntry(self)
+        self.texto_costo_usd_variable.place(x = 750, y = 190) 
+
+        self.label_variable = CTkLabel(self,text="%")      
+        self.label_variable.place(x = 900, y = 190)  
+
         self.label_cantidad = CTkLabel(self,text="Cantidad:", font=("Times New Roman",16))
-        self.label_cantidad.place(x = 630, y = 190)  
+        self.label_cantidad.place(x = 630, y = 230)  
 
         self.texto_cantidad = CTkEntry(self)
-        self.texto_cantidad.place(x = 750, y = 190)  
+        self.texto_cantidad.place(x = 750, y = 230)  
 
         self.label_proveedor = CTkLabel(self,text="Proveedor:", font=("Times New Roman",16))
-        self.label_proveedor.place(x = 630, y = 230)  
+        self.label_proveedor.place(x = 630, y = 270)  
 
         proveedores = []
 
@@ -1275,10 +1338,10 @@ class NuevoProducto(CTkToplevel):
 
         self.texto_proveedores = CTkComboBox(self, values=proveedores)
         self.texto_proveedores.set("...")
-        self.texto_proveedores.place(x = 750, y = 230)  
+        self.texto_proveedores.place(x = 750, y = 270)  
 
         self.label_categoria = CTkLabel(self,text="Categoria:", font=("Times New Roman",16))
-        self.label_categoria.place(x = 630, y = 270)  
+        self.label_categoria.place(x = 630, y = 310)  
 
         categorias = []
         conn = mysql.connector.connect(
@@ -1296,7 +1359,7 @@ class NuevoProducto(CTkToplevel):
 
         self.texto_categoria = CTkComboBox(self, values=categorias)
         self.texto_categoria.set("...")
-        self.texto_categoria.place(x = 750, y = 270)         
+        self.texto_categoria.place(x = 750, y = 310)         
 
 
 
@@ -1321,9 +1384,15 @@ class NuevoProducto(CTkToplevel):
                 if repetido:
                     error = messagebox.showerror("Error","Ese codigo ya existe en la base de datos")
                 else:
-                    # pedir confirmacion para agrear el producto
+                    # pedir confirmacion para agrear el producto                    
                     conf = messagebox.askokcancel("Confirmar","Vamos a agregar el producto a la base de datos")
                     if conf:
+                        # busquemos el costo unitario
+                        fijo = float(self.texto_costo_usd.get())                        
+                        porciento = float(self.texto_costo_usd.get())*float(self.texto_costo_usd_variable.get())/100                        
+                        costo = fijo + porciento                        
+                        costo_unitario = costo/float(self.texto_cantidad.get())                                               
+                        
                         # agregar el producto en la bd 
                         conn = mysql.connector.connect(
                             host = "localhost",
@@ -1333,7 +1402,7 @@ class NuevoProducto(CTkToplevel):
                             )
                         cursor = conn.cursor()                    
 
-                        sql = f""" INSERT INTO `productos`(`Codigo`, `Nombre`, `CostoUsd`, `Cantidad`, `Categoria`) VALUES ('{self.texto_codigo.get()}','{self.texto_nombre.get()}','{float(self.texto_costo_usd.get())/float(self.texto_cantidad.get())}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}') """
+                        sql = f""" INSERT INTO `productos`(`Codigo`, `Nombre`, `CostoUsd`, `Cantidad`, `Categoria`) VALUES ('{self.texto_codigo.get()}','{self.texto_nombre.get()}','{costo_unitario}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}') """
                         cursor.execute(sql)
                         conn.commit()
 
@@ -1365,7 +1434,7 @@ class NuevoProducto(CTkToplevel):
                             )
                         cursor = conn.cursor()                    
 
-                        sql = f""" INSERT INTO `entradas`(`Id`, `Fecha`, `Codigo`, `Nombre`, `CostoUsd`, `Cantidad`, `Categoria`, `Proveedor`) VALUES ('{id_entrada}','{fecha_actual}','{self.texto_codigo.get()}','{self.texto_nombre.get()}','{self.texto_costo_usd.get()}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}','{self.texto_proveedores.get()}') """
+                        sql = f""" INSERT INTO `entradas`(`Id`, `Fecha`, `Codigo`, `Nombre`, `CostoUsd`, `Cantidad`, `Categoria`, `Proveedor`) VALUES ('{id_entrada}','{fecha_actual}','{self.texto_codigo.get()}','{self.texto_nombre.get()}','{costo}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}','{self.texto_proveedores.get()}') """
                         cursor.execute(sql)
                         conn.commit()
 
@@ -1373,14 +1442,13 @@ class NuevoProducto(CTkToplevel):
                         self.texto_codigo.delete(0,END)
                         self.texto_nombre.delete(0,END)
                         self.texto_costo_usd.delete(0,END)
+                        self.texto_costo_usd_variable.delete(0,END)
                         self.texto_cantidad.delete(0,END)
                         self.texto_proveedores.set("...")
                         self.texto_categoria.set("...")
         
             except:
-                error = messagebox.showerror("Error","Hubo problemas para agregar el producto")
-            
-                
+                error = messagebox.showerror("Error","Hubo problemas para agregar el producto")               
             
         def cancelar():            
             self.destroy()
@@ -1413,7 +1481,16 @@ class Categorias(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))            
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo2.jpg"), size = (800,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################          
 
         estilos_tablas()        
         
@@ -1580,7 +1657,16 @@ class Clientes(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))            
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo4.jpg"), size = (800,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################          
 
         estilos_tablas()        
         
@@ -1738,7 +1824,16 @@ class Proveedores(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))          
+        self.after(200, lambda: self.attributes('-topmost', False))    
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo4.jpg"), size = (800,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################      
 
         estilos_tablas()        
         
@@ -1899,7 +1994,16 @@ class Trabajadores(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))          
+        self.after(200, lambda: self.attributes('-topmost', False))    
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo3.jpg"), size = (800,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################      
 
         estilos_tablas()  
 
@@ -2060,7 +2164,16 @@ class Tarifas(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))         
+        self.after(200, lambda: self.attributes('-topmost', False))    
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo5.jpg"), size = (300,300))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################     
 
         self.label_usd = CTkLabel(self,text="USD: ")   
         self.label_usd.place(x=30,y=30)   
@@ -2187,6 +2300,15 @@ class Reabastecer(CTkToplevel):
         self.lift()
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################
 
         estilos_tablas()        
         
@@ -2340,8 +2462,11 @@ class Reabastecer(CTkToplevel):
             temp.btn_cambio = CTkButton(temp,text="Cambio Moneda", command=convertir)
             temp.btn_cambio.pack(pady=5)
 
-            temp.texto_costo_usd = CTkEntry(temp, placeholder_text="Costo en usd ...")
-            temp.texto_costo_usd.pack(pady=5)            
+            temp.texto_costo_usd = CTkEntry(temp, placeholder_text="Costo Fijo ...")
+            temp.texto_costo_usd.pack(pady=5)  
+
+            temp.texto_costo_usd_variable = CTkEntry(temp, placeholder_text="Costo Variable (%) ...")
+            temp.texto_costo_usd_variable.pack(pady=5)          
 
             temp.texto_cantidad = CTkEntry(temp, placeholder_text="Cantidad ...")
             temp.texto_cantidad.pack(pady=5)
@@ -2371,9 +2496,8 @@ class Reabastecer(CTkToplevel):
                             costo_antes = index[0]
                             cant_antes = index[1]
 
-                        numerador = costo_antes*cant_antes + float(temp.texto_costo_usd.get())
+                        numerador = costo_antes*cant_antes + float(temp.texto_costo_usd.get()) + float(temp.texto_costo_usd.get())*float(temp.texto_costo_usd_variable.get())
                         denominador = cant_antes + float(temp.texto_cantidad.get())
-
                         promedio = numerador/denominador
 
                         # llevemos los resultados a la base de datos
@@ -2423,6 +2547,15 @@ class Ventas(CTkToplevel):
         self.lift()
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################
 
         estilos_tablas() 
 
@@ -2525,7 +2658,7 @@ class Ventas(CTkToplevel):
 
             opcion = IntVar(value=1)
 
-            temp.texto_precio_venta = CTkEntry(temp, placeholder_text="Precio Venta ...")            
+            temp.texto_precio_venta = CTkEntry(temp, placeholder_text="Precio Unitario ...")            
             moneda = ["CUP","USD"]
             temp.texto_moneda = CTkComboBox(temp,values=moneda)
             tipo = ["Minorista","Mayorista"]
@@ -2744,6 +2877,15 @@ class ControlRegalos(CTkToplevel):
         self.lift()
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo4.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################
 
         estilos_tablas()  
 
@@ -2969,6 +3111,15 @@ class ControlVentas(CTkToplevel):
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))  
 
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo4.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################
+
         estilos_tablas()  
 
         self.tabla = ttk.Treeview(self, columns = ("Fecha","Codigo", "Nombre", "Costo USD", "Costo CUP", "Precio", "Moneda", "Cantidad", "Cliente"), show="headings")
@@ -3193,6 +3344,15 @@ class Almacen(CTkToplevel):
         self.lift()
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo5.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################
 
         estilos_tablas()        
         
@@ -3513,6 +3673,15 @@ class Asociados(CTkToplevel):
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False)) 
 
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo3.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################
+
         estilos_tablas()        
         
         self.tabla = ttk.Treeview(self, columns = ("Fecha","Concepto", "Monto"), show="headings")
@@ -3646,6 +3815,15 @@ class Salarios(CTkToplevel):
         self.lift()
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False)) 
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo2.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################
 
         estilos_tablas()   
 
@@ -3793,6 +3971,15 @@ class ConsultaSalarios(CTkToplevel):
         self.lift()
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo5.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################
 
         estilos_tablas() 
 
@@ -3960,6 +4147,15 @@ class ConsultaAsociados(CTkToplevel):
         self.attributes('-topmost', True)
         self.after(200, lambda: self.attributes('-topmost', False))  
 
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo4.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################
+
         estilos_tablas() 
 
         self.tabla = ttk.Treeview(self, columns = ("Fecha","Concepto", "Monto"), show="headings")
@@ -4124,7 +4320,16 @@ class ConsultaTotales(CTkToplevel):
         self.after(250, lambda: self.iconbitmap('D:/TripleM/imagenes funcionamiento/triplem_icono.ico'))   
         self.lift()
         self.attributes('-topmost', True)
-        self.after(200, lambda: self.attributes('-topmost', False))         
+        self.after(200, lambda: self.attributes('-topmost', False))   
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/triplem/imagenes funcionamiento/fondo.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)          
+
+        ###################################################      
 
         self.label_informaciones = CTkLabel(self, text="---------- Informaciones ----------")
         self.label_informaciones.place(x=500,y=60)
@@ -4244,10 +4449,10 @@ class ConsultaTotales(CTkToplevel):
                         database = "triplem"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT  `Precio` FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    sql = f""" SELECT  `Precio`, `Cantidad` FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
                     cursor.execute(sql)
                     for index in cursor:
-                        ingresos += index[0]
+                        ingresos += index[0]*index[1]
 
                     string_ingresos.set(round(ingresos,2))
                     ####################################################
@@ -4261,10 +4466,10 @@ class ConsultaTotales(CTkToplevel):
                         database = "triplem"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT  `Precio` FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" and `Tipo` = "Mayorista" """
+                    sql = f""" SELECT  `Precio`, `Cantidad` FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" and `Tipo` = "Mayorista" """
                     cursor.execute(sql)
                     for index in cursor:
-                        mayorista += index[0]
+                        mayorista += index[0]*index[1]
 
                     string_mayorista.set(round(mayorista,2))
                     ####################################################
@@ -4278,10 +4483,10 @@ class ConsultaTotales(CTkToplevel):
                         database = "triplem"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT  `Precio` FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" and `Tipo` = "Minorista" """
+                    sql = f""" SELECT  `Precio`, `Cantidad` FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" and `Tipo` = "Minorista" """
                     cursor.execute(sql)
                     for index in cursor:
-                        minorista += index[0]
+                        minorista += index[0]*index[1]
 
                     string_minorista.set(round(minorista,2))
 
@@ -4514,33 +4719,6 @@ class ConsultaTotales(CTkToplevel):
 
         self.btn_fecha_final = CTkButton(self,text="...",command=fecha_final, width = 27, height = 27)
         self.btn_fecha_final.place(x=200 ,y=130 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 autenticacion = Autenticacion()
