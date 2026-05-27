@@ -220,7 +220,7 @@ conn = mysql.connector.connect(
 cursor = conn.cursor()
 
 try:
-    sql = """CREATE TABLE `lilly`.`productos` (`Codigo` VARCHAR(50) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL,`Precio` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Categoria` VARCHAR(50) NOT NULL, `Minimo` INT NOT NULL ) ENGINE = InnoDB; """
+    sql = """CREATE TABLE `lilly`.`productos` (`Codigo` INT(11) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL,`Precio` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Categoria` VARCHAR(50) NOT NULL, `Minimo` INT NOT NULL ) ENGINE = InnoDB; """
     cursor.execute(sql)
     conn.commit()
 except:
@@ -381,8 +381,14 @@ class Autenticacion(CTk):
         global autorizacion
         autorizacion = []
 
+        conn = mysql.connector.connect(
+            host = "localhost",
+            user = "lilly",
+            password = "123456",
+            database = "lilly"
+            )
+        cursor = conn.cursor()
         sql = """SELECT Usuario, Password FROM usuarios"""
-
         cursor.execute(sql)
         for index in cursor:
             autorizacion.append(index)
@@ -1720,6 +1726,9 @@ class NuevoProducto(CTkToplevel):
         # ************************ para saber por donde voy         
         ultimo_id = StringVar()
 
+        label_ultimo_id = CTkLabel(self, textvariable = ultimo_id)
+        label_ultimo_id.place(x = 630, y = 30) 
+
         def actualizar_id():
             ultimo_id.set("")
 
@@ -1732,13 +1741,9 @@ class NuevoProducto(CTkToplevel):
             cursor = conn.cursor()
 
             sql = """SELECT MAX(Codigo) FROM `productos`;"""
-            cursor.execute(sql)
-            
+            cursor.execute(sql)            
             for index in cursor:                
-                ultimo_id.set(index[0])
-
-            label_ultimo_id = CTkLabel(self, textvariable = ultimo_id)
-            label_ultimo_id.place(x = 630, y = 30) 
+                ultimo_id.set(index[0])            
 
         actualizar_id()
 
@@ -1902,10 +1907,7 @@ class NuevoProducto(CTkToplevel):
                             password = "123456",
                             database = "lilly"
                             )
-                        cursor = conn.cursor()    
-
-                                        
-
+                        cursor = conn.cursor() 
                         sql = f""" INSERT INTO `productos`(`Codigo`, `Nombre`, `CostoUsd`, `Precio`, `Cantidad`, `Categoria`, `Minimo`) VALUES ('{self.texto_codigo.get()}','{self.texto_nombre.get()}','{float(self.texto_costo_usd.get())/float(self.texto_cantidad.get())}','{self.texto_precio.get()}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}','{self.texto_minimo.get()}')  """
                         cursor.execute(sql)
                         conn.commit()
@@ -2641,6 +2643,15 @@ class Almacen(CTkToplevel):
                 root.after(200, lambda: root.attributes('-topmost', False)) 
                 root.after(250, lambda: root.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico')) 
 
+                ############ agregar el fondo de pantalla #########
+      
+                root.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo.jpg"), size = (600,600))  
+
+                root.label_image = CTkLabel(root, image = root.imagen, text = "")  
+                root.label_image.place(x = 0, y = 0)      
+
+                #######################################################   
+
                 # ************************** Labels *************************        
 
                 root.label_codigo = CTkLabel(root,text="Codigo:", font=("Times New Roman",16))
@@ -2731,16 +2742,22 @@ class Almacen(CTkToplevel):
                     vent.btn_cambiar.pack(pady=10)           
 
                 root.btn_cambio = CTkButton(root,text="...", width=30,command=cambio)      
-                root.btn_cambio.place(x = 900, y = 150)  
+                root.btn_cambio.place(x = 900, y = 150) 
+
+                root.label_precio = CTkLabel(root,text="Precio:", font=("Times New Roman",16))
+                root.label_precio.place(x = 630, y = 190)  
+
+                root.texto_precio = CTkEntry(root)
+                root.texto_precio.place(x = 750, y = 190)   
 
                 root.label_cantidad = CTkLabel(root,text="Cantidad:", font=("Times New Roman",16))
-                root.label_cantidad.place(x = 630, y = 190)  
+                root.label_cantidad.place(x = 630, y = 230)  
 
                 root.texto_cantidad = CTkEntry(root)
-                root.texto_cantidad.place(x = 750, y = 190)                 
+                root.texto_cantidad.place(x = 750, y = 230)                 
 
                 root.label_categoria = CTkLabel(root,text="Categoria:", font=("Times New Roman",16))
-                root.label_categoria.place(x = 630, y = 230)  
+                root.label_categoria.place(x = 630, y = 270)  
 
                 categorias = []
                 conn = mysql.connector.connect(
@@ -2758,7 +2775,13 @@ class Almacen(CTkToplevel):
 
                 root.texto_categoria = CTkComboBox(root, values=categorias)
                 root.texto_categoria.set("...")
-                root.texto_categoria.place(x = 750, y = 230)
+                root.texto_categoria.place(x = 750, y = 270)
+
+                root.label_minimo = CTkLabel(root,text="Minimo:", font=("Times New Roman",16))
+                root.label_minimo.place(x = 630, y = 310)  
+
+                root.texto_minimo = CTkEntry(root)
+                root.texto_minimo.place(x = 750, y = 310) 
 
                 # vamos a llenar los campos con la info que ya existe en la base de datos
                 conn = mysql.connector.connect(
@@ -2775,8 +2798,10 @@ class Almacen(CTkToplevel):
                     root.texto_codigo.insert(0,index[0])                     
                     root.texto_nombre.insert(0,index[1]) 
                     root.texto_costo_usd.insert(0,index[2]*index[3])
-                    root.texto_cantidad.insert(0,index[3])                    
-                    root.texto_categoria.set(index[4])
+                    root.texto_cantidad.insert(0,index[4])                    
+                    root.texto_categoria.set(index[5])
+                    root.texto_minimo.insert(0,index[6]) 
+                    root.texto_precio.insert(0,index[3]) 
 
 
                 def modificar_producto():
@@ -2792,7 +2817,7 @@ class Almacen(CTkToplevel):
                                 )
                             cursor = conn.cursor()                    
 
-                            sql = f""" UPDATE `productos` SET `Codigo`='{root.texto_codigo.get()}',`Nombre`='{root.texto_nombre.get()}',`CostoUsd`='{float(root.texto_costo_usd.get())/float(root.texto_cantidad.get())}',`Cantidad`='{root.texto_cantidad.get()}',`Categoria`='{root.texto_categoria.get()}' WHERE `Codigo` = "{codigo_almacen}"; """
+                            sql = f""" UPDATE `productos` SET `Codigo`='{root.texto_codigo.get()}',`Nombre`='{root.texto_nombre.get()}',`CostoUsd`='{float(root.texto_costo_usd.get())/float(root.texto_cantidad.get())}',`Precio`='{root.texto_precio.get()}',`Cantidad`='{root.texto_cantidad.get()}',`Categoria`='{root.texto_categoria.get()}',`Minimo`='{root.texto_minimo}' WHERE `Codigo` = "{codigo_almacen}";"""
                             cursor.execute(sql)
                             conn.commit()
 
@@ -2800,6 +2825,7 @@ class Almacen(CTkToplevel):
 
                             llenar_tabla(True)
                             root.destroy()
+                            temp.destroy()
 
                     except:
                         error = messagebox.showerror("Error","No se ha podido modificar el producto")
@@ -2826,6 +2852,8 @@ class Almacen(CTkToplevel):
                         sql = f""" DELETE FROM `productos` WHERE `Codigo` = "{codigo_almacen}" """
                         cursor.execute(sql)
                         conn.commit()
+
+                        temp.destroy()
                     
                     except:
                         error = messagebox.showerror("Error","No se pudo eliminar el producto")
@@ -5189,6 +5217,6 @@ class Deficit(CTkToplevel):
         self.btn = CTkButton(self,text="Hacer Txt", command=hacer_txt)
         self.btn.place(x=50,y=450)
 
-
+conn.close()
 autenticacion = Autenticacion()
 autenticacion.mainloop()
