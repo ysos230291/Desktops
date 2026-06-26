@@ -8,7 +8,6 @@ from datetime import *
 import mysql.connector
 import subprocess
 from PIL import Image , ImageTk
-#import openpyxl as op
 import pandas as pd 
 from tkcalendar import *
 import copy
@@ -332,6 +331,15 @@ except:
 # *************************** creando tabla tarifas ****************************
 try:
     sql = """CREATE TABLE `lilly`.`tarifas` (`USD` FLOAT NOT NULL, `EUR` FLOAT NOT NULL, `EUR-USD` FLOAT NOT NULL ) ENGINE = InnoDB;"""
+    cursor.execute(sql)
+    conn.commit()
+except:
+    temp = True
+
+
+# *************************** creando tabla mensajerias ****************************
+try:
+    sql = """CREATE TABLE `lilly`.`mensajeria` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL, `Monto` FLOAT NOT NULL ) ENGINE = InnoDB;"""
     cursor.execute(sql)
     conn.commit()
 except:
@@ -886,7 +894,7 @@ class Lobby(CTkToplevel):
 
 
             temp.btn_cambiar = CTkButton(temp, text="Modificar", command=modificar)
-            temp.btn_cambiar.pack(pady=10)             
+            temp.btn_cambiar.pack(pady=10)               
 
         def almacen_lobby():
             alm = Almacen()
@@ -917,6 +925,15 @@ class Lobby(CTkToplevel):
 
         def deficit_lobby():
             de = Deficit()
+
+        def envian_lobby():
+            de = Envian()
+
+        def reciben_lobby():
+            de = Reciben()
+
+        def clientes_lobby():
+            cli = Clientes()
 
         def salva_lobby():            
             # Crear carpeta de respaldos si no existe
@@ -973,7 +990,7 @@ class Lobby(CTkToplevel):
 
         control_menu = Menu(self.menu, tearoff = 0)   
         control_menu.add_command(label="Control Regalo", command = control_regalo)                                     
-        control_menu.add_command(label="Control Venta", command = control_venta)    
+        control_menu.add_command(label="Control Venta", command = control_venta)            
 
         gastos_menu = Menu(self.menu, tearoff = 0)   
         gastos_menu.add_command(label="Asociados", command = asociados_lobby)                                     
@@ -985,6 +1002,7 @@ class Lobby(CTkToplevel):
         consultas_menu.add_command(label="Salarios", command = control_salarios_lobby)        
         consultas_menu.add_command(label="Asociados", command = control_asociados_lobby)        
         consultas_menu.add_command(label="Deficit", command = deficit_lobby)        
+        consultas_menu.add_command(label="Clientes", command = clientes_lobby)        
         
         entradas_menu = Menu(self.menu, tearoff = 0)
         entradas_menu.add_command(label="Nuevo Producto", command = nuevo_producto_lobby)                     
@@ -993,6 +1011,8 @@ class Lobby(CTkToplevel):
         administrativo_menu = Menu(self.menu, tearoff = 0)
         administrativo_menu.add_command(label="Categorias", command = categorias_lobby)        
         administrativo_menu.add_command(label="Trabajadores", command = trabajadores_lobby) 
+        administrativo_menu.add_command(label="Envian", command = envian_lobby) 
+        administrativo_menu.add_command(label="Reciben", command = reciben_lobby) 
         administrativo_menu.add_command(label="Tarifas", command = tarifas_lobby)                            
 
         usuario_menu = Menu(self.menu, tearoff = 0)
@@ -1553,7 +1573,356 @@ class Categorias(CTkToplevel):
         self.btn_agregar.place(x = 100, y = 400)        
 
         self.btn_eliminar = CTkButton(self , text = "Eliminar", command = eliminar, width = 200, height = 30)
-        self.btn_eliminar.place(x = 500, y = 400)        
+        self.btn_eliminar.place(x = 500, y = 400)    
+
+
+# **********************************************************************************
+# ********************************* Envian *****************************************
+# **********************************************************************************
+
+class Envian(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Envian")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 800
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("800x600") 
+        self.resizable(False,False) 
+        self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))      
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo.jpg"), size = (800,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################         
+
+        estilos_tablas()  
+
+        self.tabla = ttk.Treeview(self, columns = ())
+        self.tabla.column("#0", width = 500)
+
+        self.tabla.place(x = 100, y = 50)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Nombre")
+
+        scrollbar_entrenadores = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar_entrenadores.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar_entrenadores.set)  
+
+        def llenar_tabla():
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "lilly",
+                password = "123456",
+                database = "lilly"
+                )
+            cursor = conn.cursor()
+
+            sql = """SELECT * FROM `envia`;"""
+            cursor.execute(sql)
+
+            for index in cursor:
+                self.tabla.insert("",END, text = index[1])
+
+        llenar_tabla()
+
+        def agregar():           
+            temp = CTkToplevel()
+            temp.title("Agregar") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False)) 
+            temp.after(250, lambda: temp.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))  
+
+            temp.texto_nombre = CTkEntry(temp, placeholder_text="Nombre...")
+            temp.texto_nombre.pack(pady = 10)
+
+            def aceptar():
+                if temp.texto_nombre.get() == "":
+                    error = messagebox.showerror("Error","Debes escribir algun nombre")
+                else:
+                    # vemos que no se repita la categoria
+                    repetido = False
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "lilly",
+                        password = "123456",
+                        database = "lilly"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = f""" SELECT * FROM `envia` """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        if index[0] == temp.texto_nombre.get():
+                            repetido = True
+                            error = messagebox.showerror("Error","Esa nombre ya existe")
+
+                    if not repetido:
+                        # encontrarle el id 
+                        id_entrada = 1
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "lilly",
+                            password = "123456",
+                            database = "lilly"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = """SELECT MAX(Id) FROM `envia`;"""
+                        cursor.execute(sql)
+                        for index in cursor:
+                            if index[0] == None:
+                                pass
+
+                            else:
+                                id_entrada = index[0] + 1
+
+                        # agregarlo en la bd 
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "lilly",
+                            password = "123456",
+                            database = "lilly"
+                            )
+                        cursor = conn.cursor()                        
+
+                        sql = f""" INSERT INTO `envia`(`Id`, `Nombre`) VALUES ('{id_entrada}','{temp.texto_nombre.get()}') """
+                        cursor.execute(sql)
+                        conn.commit()
+
+                        llenar_tabla()
+
+                        term = messagebox.showinfo("Terminado","Se ha agregado")
+                        temp.destroy()
+
+            temp.btn = CTkButton(temp, text="Aceptar", command=aceptar)
+            temp.btn.pack(pady = 10)
+
+        self.btn_agregar = CTkButton(self, text = "Agregar", command = agregar, width = 200, height = 30)
+        self.btn_agregar.place(x = 100, y = 400)  
+
+        def double_click(event):            
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                
+                nombre = self.tabla.item(item, "text") 
+
+            conf = messagebox.askokcancel("Confirmar","Se va a eliminar") 
+            if conf:
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "lilly",
+                    password = "123456",
+                    database = "lilly"
+                    )
+                cursor = conn.cursor()
+
+                sql = f""" DELETE FROM `envia` WHERE `Nombre` = "{nombre}" """
+                cursor.execute(sql)
+                conn.commit()
+
+                llenar_tabla()              
+
+        self.tabla.bind("<Double-1>", double_click)
+
+
+# **********************************************************************************
+# ******************************** Reciben *****************************************
+# **********************************************************************************
+
+class Reciben(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Reciben")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 800
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("800x600") 
+        self.resizable(False,False) 
+        self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))      
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo.jpg"), size = (800,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################         
+
+        estilos_tablas()  
+
+        self.tabla = ttk.Treeview(self, columns = ("Nombre", "Direccion", "Telefono"))
+        self.tabla.column("#0", width = 100)
+        self.tabla.column("Nombre", width = 200)
+        self.tabla.column("Direccion", width = 100)
+        self.tabla.column("Telefono", width = 100)
+        
+        self.tabla.place(x = 50, y = 50)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Id")
+        self.tabla.heading("Nombre", text = "Nombre")
+        self.tabla.heading("Direccion", text = "Direccion")
+        self.tabla.heading("Telefono", text = "Telefono")        
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set)
+
+        def llenar_tabla():
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "lilly",
+                password = "123456",
+                database = "lilly"
+                )
+            cursor = conn.cursor()
+
+            sql = """SELECT * FROM `recibe`;"""
+            cursor.execute(sql)
+
+            for index in cursor:
+                self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],)) 
+
+        llenar_tabla()
+
+        def agregar():           
+            temp = CTkToplevel()
+            temp.title("Agregar") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False)) 
+            temp.after(250, lambda: temp.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))  
+
+            temp.texto_nombre = CTkEntry(temp, placeholder_text="Nombre...")
+            temp.texto_nombre.pack(pady = 10)
+
+            temp.texto_direccion = CTkEntry(temp, placeholder_text="Direccion...")
+            temp.texto_direccion.pack(pady = 10)
+
+            temp.texto_telefono = CTkEntry(temp, placeholder_text="Telefono...")
+            temp.texto_telefono.pack(pady = 10)
+
+            def aceptar():
+                if temp.texto_nombre.get() == "" or temp.texto_direccion.get() == "" or temp.texto_telefono.get() == "":
+                    error = messagebox.showerror("Error","Debes llenar los campos")
+                else:                    
+                    # encontrarle el id 
+                    id_entrada = 1
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "lilly",
+                        password = "123456",
+                        database = "lilly"
+                        )
+                    cursor = conn.cursor()
+
+                    sql = """SELECT MAX(Id) FROM `recibe`;"""
+                    cursor.execute(sql)
+                    for index in cursor:
+                        if index[0] == None:
+                            pass
+
+                        else:
+                            id_entrada = index[0] + 1
+
+                    # agregarlo en la bd 
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "lilly",
+                        password = "123456",
+                        database = "lilly"
+                        )
+                    cursor = conn.cursor()                        
+
+                    sql = f""" INSERT INTO `recibe`(`Id`, `Nombre`, `Direccion`, `Telefono`) VALUES ('{id_entrada}','{temp.texto_nombre.get()}','{temp.texto_direccion.get()}','{temp.texto_telefono.get()}') """
+                    cursor.execute(sql)
+                    conn.commit()
+
+                    llenar_tabla()
+
+                    term = messagebox.showinfo("Terminado","Se ha agregado")
+                    temp.destroy()
+
+            temp.btn = CTkButton(temp, text="Aceptar", command=aceptar)
+            temp.btn.pack(pady = 10)
+
+        self.btn_agregar = CTkButton(self, text = "Agregar", command = agregar, width = 200, height = 30)
+        self.btn_agregar.place(x = 100, y = 400)  
+
+        def double_click(event):            
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                
+                id_recibe = self.tabla.item(item, "text") 
+
+            conf = messagebox.askokcancel("Confirmar","Se va a eliminar") 
+            if conf:
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "lilly",
+                    password = "123456",
+                    database = "lilly"
+                    )
+                cursor = conn.cursor()
+
+                sql = f""" DELETE FROM `recibe` WHERE `Id` = "{id_recibe}" """
+                cursor.execute(sql)
+                conn.commit()
+
+                llenar_tabla()              
+
+        self.tabla.bind("<Double-1>", double_click)
+
+
+
+
+
+
+
+
+
+
+
 
         
 
@@ -1759,7 +2128,7 @@ class NuevoProducto(CTkToplevel):
         self.texto_nombre = CTkEntry(self)
         self.texto_nombre.place(x = 750, y = 110)       
 
-        self.label_costo_usd = CTkLabel(self,text="Costo Lote Usd:", font=("Times New Roman",16))
+        self.label_costo_usd = CTkLabel(self,text="Costo:", font=("Times New Roman",16))
         self.label_costo_usd.place(x = 630, y = 150)  
 
         self.texto_costo_usd = CTkEntry(self)
@@ -1908,7 +2277,7 @@ class NuevoProducto(CTkToplevel):
                             database = "lilly"
                             )
                         cursor = conn.cursor() 
-                        sql = f""" INSERT INTO `productos`(`Codigo`, `Nombre`, `CostoUsd`, `Precio`, `Cantidad`, `Categoria`, `Minimo`) VALUES ('{self.texto_codigo.get()}','{self.texto_nombre.get()}','{float(self.texto_costo_usd.get())/float(self.texto_cantidad.get())}','{self.texto_precio.get()}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}','{self.texto_minimo.get()}')  """
+                        sql = f""" INSERT INTO `productos`(`Codigo`, `Nombre`, `CostoUsd`, `Precio`, `Cantidad`, `Categoria`, `Minimo`) VALUES ('{self.texto_codigo.get()}','{self.texto_nombre.get()}','{self.texto_costo_usd.get()}','{self.texto_precio.get()}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}','{self.texto_minimo.get()}')  """
                         cursor.execute(sql)
                         conn.commit()
 
@@ -1956,8 +2325,6 @@ class NuevoProducto(CTkToplevel):
         
             except:
                 error = messagebox.showerror("Error","Hubo problemas para agregar el producto")          
-            
-        
 
         self.btn_aceptar = CTkButton(self,text="Aceptar",command=agregar_producto, width = 300, height = 40)
         self.btn_aceptar.place(x=650 ,y=500 )
@@ -2181,7 +2548,7 @@ class Reabastecer(CTkToplevel):
                             costo_antes = index[0]
                             cant_antes = index[1]
 
-                        numerador = costo_antes*cant_antes + float(temp.texto_costo_usd.get())
+                        numerador = costo_antes*cant_antes + float(temp.texto_costo_usd.get())*float(temp.texto_cantidad.get())
                         denominador = cant_antes + float(temp.texto_cantidad.get())
 
                         promedio = numerador/denominador
@@ -2380,50 +2747,153 @@ class Salarios(CTkToplevel):
 
         ############ agregar el fondo de pantalla #########
       
-        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo2.jpg"), size = (1000,600))  
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo.jpg"), size = (1000,600))  
 
         self.label_image = CTkLabel(self, image = self.imagen, text = "")  
         self.label_image.place(x = 0, y = 0)      
 
         #######################################################   
 
-        estilos_tablas()   
+        estilos_tablas() 
 
         self.tabla = ttk.Treeview(self, columns = ("Fecha","Concepto", "Monto"), show="headings")
         self.tabla.column("#0", width = 100, anchor="center")
         self.tabla.column("Fecha", width = 100, anchor="center")
-        self.tabla.column("Concepto", width = 500, anchor="center")
-        self.tabla.column("Monto", width = 100, anchor="center")        
+        self.tabla.column("Concepto", width = 400, anchor="center")
+        self.tabla.column("Monto", width = 75, anchor="center")        
 
-        self.tabla.place(x = 150, y = 50)        
+        self.tabla.place(x = 50, y = 50)        
         self.tabla.config(height = 10)
 
         self.tabla.heading("#0", text = "Id", anchor="center")
         self.tabla.heading("Fecha", text = "Fecha", anchor="center")
         self.tabla.heading("Concepto", text = "Concepto", anchor="center")
-        self.tabla.heading("Monto", text = "Monto", anchor="center")        
+        self.tabla.heading("Monto", text = "Monto", anchor="center")
 
         scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
         scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
 
-        self.tabla.config(yscrollcommand = scrollbar.set) 
+        self.tabla.config(yscrollcommand = scrollbar.set)
 
-        def llenar_tabla():
-            self.tabla.delete(*self.tabla.get_children())
-            conn = mysql.connector.connect(
-                host = "localhost",
-                user = "lilly",
-                password = "123456",
-                database = "lilly"
-                )
-            cursor = conn.cursor()
+        def escoger_concepto(event): 
+            global concepto_salario
 
-            sql = f""" SELECT * FROM `salarios` WHERE `Fecha` = "{fecha_actual}"; """
-            cursor.execute(sql)
-            for index in cursor:
-                self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],))
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                    
+                concepto_salario = self.tabla.item(item, "values")[1] 
 
-        llenar_tabla()
+            self.texto_buscador_nombre.delete(0,END)
+            self.texto_buscador_nombre.insert(0,concepto_salario)
+
+            llenar_tabla(True)
+
+        self.tabla.bind("<Double-1>", escoger_concepto)
+
+
+        def llenar_tabla(event):
+            try:
+                self.tabla.delete(*self.tabla.get_children())
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "lilly",
+                    password = "123456",
+                    database = "lilly"
+                    )
+                cursor = conn.cursor()
+
+                if self.texto_fecha_inicial.get() == "" or self.texto_fecha_final.get() == "":
+                    sql = f""" SELECT * FROM salarios WHERE `Concepto` LIKE '%{self.texto_buscador_nombre.get()}%' """
+
+                else:
+                    sql = f""" SELECT * FROM salarios WHERE `Concepto` LIKE '%{self.texto_buscador_nombre.get()}%' and `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+
+                cursor.execute(sql)
+                for index in cursor:
+                    self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],))  
+            except:
+                error = messagebox.showerror("Error","No se pudo actualizar la tabla")
+
+        self.label_fechas = CTkLabel(self,text="---------- Control de fechas ----------")
+        self.label_fechas.place(x=750,y=80) 
+
+        self.texto_fecha_inicial = CTkEntry(self,placeholder_text="Fecha inicial ...")
+        self.texto_fecha_inicial.place(x=750,y=120) 
+
+        def fecha_inicial():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_inicial.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_inicial.insert(0,str(fecha_select)) 
+                llenar_tabla(True)
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack() 
+
+
+        self.btn_fecha_inicial = CTkButton(self,text="...",command=fecha_inicial, width = 27, height = 27)
+        self.btn_fecha_inicial.place(x=900 ,y=120 )
+
+        self.texto_fecha_final = CTkEntry(self,placeholder_text="Fecha final ...")
+        self.texto_fecha_final.place(x=750,y=160) 
+
+        def fecha_final():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_final.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_final.insert(0,str(fecha_select)) 
+                llenar_tabla(True)
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack()
+
+
+        self.btn_fecha_final = CTkButton(self,text="...",command=fecha_final, width = 27, height = 27)
+        self.btn_fecha_final.place(x=900 ,y=160 )
+
+        self.label_buscador = CTkLabel(self,text="---------- Buscador ----------")
+        self.label_buscador.place(x=750,y=220)        
+
+        self.texto_buscador_nombre = CTkEntry(self,placeholder_text="Buscar por Concepto ...")
+        self.texto_buscador_nombre.place(x=750,y=260) 
+
+        self.texto_buscador_nombre.bind("<KeyRelease>", llenar_tabla )  
+
+        llenar_tabla(True)
 
         def agregar():
             temp = CTkToplevel()
@@ -2458,8 +2928,80 @@ class Salarios(CTkToplevel):
             temp.texto_trabajador.set("Escoge Trabajador ...")
             temp.texto_trabajador.pack(pady = 5)
 
-            temp.texto_monto = CTkEntry(temp, placeholder_text="Monto ...",width=300)
+            temp.texto_monto = CTkEntry(temp, placeholder_text="Monto ...",width=250)
             temp.texto_monto.pack(pady = 5)
+
+            def cambio_moneda():
+                vent = CTkToplevel()
+                vent.title("Cambio de Moneda") 
+                htotal = vent.winfo_screenheight()
+                wtotal = vent.winfo_screenwidth()
+                wventana = 300
+                hventana = 300
+                posx = round(wtotal/2-wventana/2)
+                posy = round(htotal/2-hventana/2)
+                vent.geometry(f"+{posx}+{posy}")
+                vent.lift()
+                vent.attributes('-topmost', True)
+                vent.after(200, lambda: vent.attributes('-topmost', False)) 
+                vent.after(250, lambda: vent.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico')) 
+
+                tar1 = 0           
+                tar2 = 0           
+                tar3 = 0 
+
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "lilly",
+                    password = "123456",
+                    database = "lilly"
+                    )
+                cursor = conn.cursor()
+
+                sql = """SELECT * FROM `tarifas`;"""
+                cursor.execute(sql)
+                for index in cursor:
+                    tar1 = index[0]
+                    tar2 = index[1]
+                    tar3 = index[2]
+
+                tarifa = f"Tarifa:  1USD = {tar1}CUP,  1EUR = {tar2}CUP, 1EUR = {tar3}CUP"                      
+
+                vent.label_tarifa = CTkLabel(vent,text=tarifa, font=("Times New Roman",16))
+                vent.label_tarifa.pack(pady=10)
+
+                vent.texto_cup = CTkEntry(vent, placeholder_text="CUP ...")
+                vent.texto_cup.pack(pady=5)
+
+                vent.texto_eur = CTkEntry(vent, placeholder_text="EUR ...")
+                vent.texto_eur.pack(pady=5)
+
+                def cambiar():
+                    if vent.texto_cup.get() == "" and vent.texto_eur.get() == "":
+                        error = messagebox.showerror("Error", "Debes escribir en algun campo la cantidad a cambiar")
+
+                    elif vent.texto_cup.get() != "" and vent.texto_eur.get() != "":
+                        error = messagebox.showerror("Error", "Debes escribir solo en un campo, no en ambos")
+
+                    else:
+                        if vent.texto_cup.get() != "":
+                            temp.texto_monto.delete(0,END)
+                            resultado = round(float(vent.texto_cup.get())/tar1,2)
+                            temp.texto_monto.insert(0,resultado)
+                            vent.destroy()
+
+                        else:
+                            temp.texto_monto.delete(0,END)
+                            resultado = round(float(vent.texto_eur.get())*tar3,2)
+                            temp.texto_monto.insert(0,resultado)
+                            vent.destroy()
+
+
+                vent.btn_cambiar = CTkButton(vent, text="Cambiar", command=cambiar)
+                vent.btn_cambiar.pack(pady=10)  
+
+            temp.btn_cambio = CTkButton(temp, text="Cambiar",command=cambio_moneda)
+            temp.btn_cambio.pack()
 
             def aceptar_salario():
                 try:
@@ -2498,7 +3040,7 @@ class Salarios(CTkToplevel):
                         cursor.execute(sql)
                         conn.commit()
 
-                        llenar_tabla()
+                        llenar_tabla(True)
                         temp.destroy()
 
                 except:
@@ -2508,7 +3050,34 @@ class Salarios(CTkToplevel):
             temp.btn.pack(pady = 10)
 
         self.btn_agregar = CTkButton(self, text = "Agregar", command = agregar, width = 500, height = 50)
-        self.btn_agregar.place(x = 270, y = 400) 
+        self.btn_agregar.place(x = 50, y = 450) 
+
+        # ahora eliminar un salario
+
+        def double_click(event):            
+            seleccion = self.tabla.selection()
+            if seleccion:
+                item = seleccion[0]                
+                id_salario = self.tabla.item(item, "text") 
+
+            conf = messagebox.askokcancel("Confirmar","Se va a eliminar") 
+            if conf:
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "lilly",
+                    password = "123456",
+                    database = "lilly"
+                    )
+                cursor = conn.cursor()
+
+                sql = f""" DELETE FROM `salarios` WHERE `Id` = "{id_salario}" """
+                cursor.execute(sql)
+                conn.commit()
+
+                llenar_tabla(True)              
+
+        self.tabla.bind("<Double-1>", double_click)
+
         
         
 
@@ -2569,6 +3138,29 @@ class Almacen(CTkToplevel):
         scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
 
         self.tabla.config(yscrollcommand = scrollbar.set)
+
+        # vamos a mostrar el equivalente en dinero a los productos que hay en almacen
+        string = StringVar() 
+        string.set("En Almacen:")        
+
+        def alctualizar_equivalencia():
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "lilly",
+                password = "123456",
+                database = "lilly"
+                )
+            cursor = conn.cursor()
+
+            sql = f""" SELECT SUM(`CostoUsd`*`Cantidad`) FROM `productos`; """
+            cursor.execute(sql)
+            for index in cursor:
+                string.set("En Almacen: " + f"{index[0]} " + "USD")
+
+        alctualizar_equivalencia()
+
+        self.label_equivalente = CTkLabel(self,textvariable = string)
+        self.label_equivalente.place(x=700,y=50)
 
         def llenar_tabla(event):
             self.tabla.delete(*self.tabla.get_children())
@@ -2666,7 +3258,7 @@ class Almacen(CTkToplevel):
                 root.texto_nombre = CTkEntry(root)
                 root.texto_nombre.place(x = 750, y = 110)       
 
-                root.label_costo_usd = CTkLabel(root,text="Costo Lote Usd:", font=("Times New Roman",16))
+                root.label_costo_usd = CTkLabel(root,text="Costo Usd:", font=("Times New Roman",16))
                 root.label_costo_usd.place(x = 630, y = 150)  
 
                 root.texto_costo_usd = CTkEntry(root)
@@ -2797,7 +3389,7 @@ class Almacen(CTkToplevel):
                 for index in cursor:
                     root.texto_codigo.insert(0,index[0])                     
                     root.texto_nombre.insert(0,index[1]) 
-                    root.texto_costo_usd.insert(0,index[2]*index[3])
+                    root.texto_costo_usd.insert(0,index[2])
                     root.texto_cantidad.insert(0,index[4])                    
                     root.texto_categoria.set(index[5])
                     root.texto_minimo.insert(0,index[6]) 
@@ -2817,13 +3409,14 @@ class Almacen(CTkToplevel):
                                 )
                             cursor = conn.cursor()                    
 
-                            sql = f""" UPDATE `productos` SET `Codigo`='{root.texto_codigo.get()}',`Nombre`='{root.texto_nombre.get()}',`CostoUsd`='{float(root.texto_costo_usd.get())/float(root.texto_cantidad.get())}',`Precio`='{root.texto_precio.get()}',`Cantidad`='{root.texto_cantidad.get()}',`Categoria`='{root.texto_categoria.get()}',`Minimo`='{root.texto_minimo}' WHERE `Codigo` = "{codigo_almacen}";"""
+                            sql = f""" UPDATE `productos` SET `Codigo`='{root.texto_codigo.get()}',`Nombre`='{root.texto_nombre.get()}',`CostoUsd`='{root.texto_costo_usd.get()}',`Precio`='{root.texto_precio.get()}',`Cantidad`='{root.texto_cantidad.get()}',`Categoria`='{root.texto_categoria.get()}',`Minimo`='{root.texto_minimo.get()}' WHERE `Codigo` = "{codigo_almacen}";"""
                             cursor.execute(sql)
                             conn.commit()
 
                             completado = messagebox.showinfo("Completado","Se modifico el producto")
 
                             llenar_tabla(True)
+                            alctualizar_equivalencia()
                             root.destroy()
                             temp.destroy()
 
@@ -2853,6 +3446,8 @@ class Almacen(CTkToplevel):
                         cursor.execute(sql)
                         conn.commit()
 
+                        alctualizar_equivalencia()
+                        llenar_tabla(True)
                         temp.destroy()
                     
                     except:
@@ -3338,12 +3933,76 @@ class Ventas(CTkToplevel):
             for index in cursor:
                 self.tabla_carrito.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],)) 
 
-        # ******************* hagamos el label del total 
+        # ******************* hagamos el label del total, costo y ganancia
+        self.label_total1 = CTkLabel(self,text = "Precio: ")
+        self.label_total1.place(x=650,y = 430)
+        
         total = StringVar()
         total.set("0")
 
         self.label_total = CTkLabel(self,textvariable = total)
-        self.label_total.place(x=700,y = 450)
+        self.label_total.place(x=800,y = 430)
+
+        self.label_costo = CTkLabel(self,text = "Costo: ")
+        self.label_costo.place(x=650,y = 470)
+        
+        costo = StringVar()
+        costo.set("0")
+
+        self.label_costo = CTkLabel(self,textvariable = costo)
+        self.label_costo.place(x=800,y = 470)
+
+        self.label_ganancia = CTkLabel(self,text = "Ganancia: ")
+        self.label_ganancia.place(x=650,y = 510)
+        
+        ganancia = StringVar()
+        ganancia.set("0")
+
+        self.label_ganancia = CTkLabel(self,textvariable = ganancia)
+        self.label_ganancia.place(x=800,y = 510)
+
+        def actualizar_total():
+            # mostremos el total en el label que esta debajo
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "lilly",
+                password = "123456",
+                database = "lilly"
+                )
+            cursor = conn.cursor()           
+            sql = f""" SELECT SUM(`Precio`*`Cantidad`) FROM `carrito` """
+            cursor.execute(sql)
+            for index in cursor:
+                if index[0] is None:
+                    total.set("0") 
+                    num_total = 0    
+                else:
+                    total.set(round(index[0],2)) 
+                    num_total = index[0]            
+            
+            # -------------------------------------------
+
+            # mostremos el costo en el label que esta debajo
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "lilly",
+                password = "123456",
+                database = "lilly"
+                )
+            cursor = conn.cursor()           
+            sql = f""" SELECT SUM(`CostoUsd`*`Cantidad`) FROM `carrito` """
+            cursor.execute(sql)
+            for index in cursor:
+                if index[0] is None:
+                    costo.set("0") 
+                    num_costo = 0    
+                else:
+                    costo.set(round(index[0],2)) 
+                    num_costo = index[0]               
+
+            # -------------------------------------------- 
+            # ahora mostremos la ganancia
+            ganancia.set(round(num_total - num_costo,2)) 
 
 
         def limpiar_carrito():
@@ -3451,20 +4110,7 @@ class Ventas(CTkToplevel):
                                 cursor = conn.cursor()           
                                 sql = f""" UPDATE `productos` SET `Cantidad`= `Cantidad` - '{temp.texto_cantidad.get()}' WHERE `Codigo` = {cod} """
                                 cursor.execute(sql)
-                                conn.commit()
-
-                                # mostremos el total en el label que esta debajo
-                                conn = mysql.connector.connect(
-                                    host = "localhost",
-                                    user = "lilly",
-                                    password = "123456",
-                                    database = "lilly"
-                                    )
-                                cursor = conn.cursor()           
-                                sql = f""" SELECT SUM(`Precio`*`Cantidad`) FROM `carrito` """
-                                cursor.execute(sql)
-                                for index in cursor:
-                                    total.set(index[0])
+                                conn.commit()                                
 
                                 # ******************************* actualizaciones
                                 actualizar_productos(True)
@@ -3512,23 +4158,6 @@ class Ventas(CTkToplevel):
 
 
         self.tabla.bind("<Double-1>", mandar_al_carrito)
-
-        def actualizar_total():
-            # mostremos el total en el label que esta debajo
-            conn = mysql.connector.connect(
-                host = "localhost",
-                user = "lilly",
-                password = "123456",
-                database = "lilly"
-                )
-            cursor = conn.cursor()           
-            sql = f""" SELECT SUM(`Precio`*`Cantidad`) FROM `carrito` """
-            cursor.execute(sql)
-            for index in cursor:
-                if index[0] is None:
-                    total.set("0")
-                else:
-                    total.set(index[0])
 
 
         def devolver(codigo,cantidad):
@@ -3757,25 +4386,78 @@ class Ventas(CTkToplevel):
                 # ************************ envia 
 
                 temp.label_envia = CTkLabel(temp, text="---------- Envia ----------")
-                temp.label_envia.pack(pady=5)
+                temp.label_envia.pack(pady=5)                
 
-                envian = []  
-
-                conn = mysql.connector.connect(
-                    host = "localhost",
-                    user = "lilly",
-                    password = "123456",
-                    database = "lilly"
-                    )
-                cursor = conn.cursor()           
-                sql = f""" SELECT `Nombre` FROM `envia` ORDER BY `Nombre` """
-                cursor.execute(sql)
-                for index in cursor:
-                    envian.append(index[0])   
-
-                temp.texto_envia = CTkComboBox(temp, values=envian ,width=200)
-                temp.texto_envia.set("Envia ...")
+                temp.texto_envia = CTkEntry(temp,width=200,placeholder_text="Envia...")                
                 temp.texto_envia.pack(pady=5)
+
+                # ahora mostrar opciones cuando escribo
+                def opciones_envia(event):
+                    global vent_envian
+                    try:
+                        vent_envian.destroy()
+                        vent_envian = None
+                    except:
+                        pass
+                    
+                    # mostraremos una ventana con los nombres y al dar 2ble click se agreara la persona 
+                    vent_envian = CTkToplevel()
+                    vent_envian.title("Regalar") 
+                    htotal = vent_envian.winfo_screenheight()
+                    wtotal = vent_envian.winfo_screenwidth()
+                    wventana = 550
+                    hventana = 300
+                    posx = round(wtotal/2-wventana/2)
+                    posy = round(htotal/2-hventana/2)
+                    vent_envian.geometry(f"+{posx}+{posy}")
+                    vent_envian.lift()
+                    vent_envian.attributes('-topmost', True)
+                    vent_envian.after(200, lambda: vent_envian.attributes('-topmost', False)) 
+                    vent_envian.after(250, lambda: vent_envian.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico')) 
+
+                    tabla_envian = ttk.Treeview(vent_envian)
+                    tabla_envian.column("#0", width = 100, anchor="center")                    
+
+                    tabla_envian.pack(pady=5)                    
+
+                    tabla_envian.heading("#0", text = "Nombre", anchor="center")                    
+
+                    scrollbar3 = CTkScrollbar(vent_envian, command = tabla_envian.yview, width = 18)
+                    scrollbar3.place(in_ = tabla_envian, relheigh = 1, relx = 1)
+
+                    tabla_envian.config(yscrollcommand = scrollbar3.set)
+
+                    # ahora llenar la tabla 
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "lilly",
+                        password = "123456",
+                        database = "lilly"
+                        )
+                    cursor = conn.cursor()           
+                    sql = f""" SELECT `Nombre` FROM `envia` WHERE `Nombre` LIKE '%{temp.texto_envia.get()}%'; """
+                    cursor.execute(sql)
+                    for index in cursor:                        
+                        tabla_envian.insert("",END, text = index[0],)
+
+                    # ahora al dar 2ble click se escribira el nombre en el campo
+                    def escribir_envia(event):
+                        global vent_envian
+                        
+                        temp.texto_envia.delete(0,END)
+                        seleccion = tabla_envian.selection()
+                        if seleccion:
+                            item = seleccion[0]                
+                            envia = tabla_envian.item(item, "text") 
+
+                        temp.texto_envia.insert(0,envia)
+                        vent_envian.destroy()   
+                        vent_envian = None                 
+                        
+                    tabla_envian.bind("<Double-1>", escribir_envia)              
+
+
+                temp.texto_envia.bind("<KeyRelease>", opciones_envia) 
 
                 def guardar_envia():
                     if temp.texto_envia.get() == "":
@@ -3820,25 +4502,54 @@ class Ventas(CTkToplevel):
                 # **************************************** recibe
 
                 temp.label_recibe = CTkLabel(temp, text="---------- Recibe ----------")
-                temp.label_recibe.pack(pady=(30,5))
+                temp.label_recibe.pack(pady=(30,5))                               
 
-                reciben = []  
+                temp.texto_recibe = CTkEntry(temp,width=200,placeholder_text="Recibe...")                             
+                temp.texto_recibe.pack(pady=5)  
 
-                conn = mysql.connector.connect(
-                    host = "localhost",
-                    user = "lilly",
-                    password = "123456",
-                    database = "lilly"
-                    )
-                cursor = conn.cursor()           
-                sql = f""" SELECT `Nombre` FROM `recibe` ORDER BY `Nombre` """
-                cursor.execute(sql)
-                for index in cursor:
-                    reciben.append(index[0])  
+                temp.texto_direccion = CTkEntry(temp, placeholder_text="Direccion ...", width=200)
+                temp.texto_direccion.pack(pady=5)
 
-                def llenar_recibe(event):
-                    temp.texto_direccion.delete(0,END)
-                    temp.texto_telefono.delete(0,END)
+                temp.texto_telefono = CTkEntry(temp, placeholder_text="Telefono ...", width=200)
+                temp.texto_telefono.pack(pady=5)
+
+                # vamos a autocompletar el campo
+                def opciones_recibe(event):
+                    global vent_reciben
+                    try:
+                        vent_reciben.destroy()
+                        vent_reciben = None
+                    except:
+                        pass
+                    
+                    # mostraremos una ventana con los nombres y al dar 2ble click se agreara la persona 
+                    vent_reciben = CTkToplevel()
+                    vent_reciben.title("Regalar") 
+                    htotal = vent_reciben.winfo_screenheight()
+                    wtotal = vent_reciben.winfo_screenwidth()
+                    wventana = 550
+                    hventana = 300
+                    posx = round(wtotal/2-wventana/2)
+                    posy = round(htotal/2-hventana/2)
+                    vent_reciben.geometry(f"+{posx}+{posy}")
+                    vent_reciben.lift()
+                    vent_reciben.attributes('-topmost', True)
+                    vent_reciben.after(200, lambda: vent_reciben.attributes('-topmost', False)) 
+                    vent_reciben.after(250, lambda: vent_reciben.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico')) 
+
+                    tabla_reciben = ttk.Treeview(vent_reciben)
+                    tabla_reciben.column("#0", width = 100, anchor="center")                    
+
+                    tabla_reciben.pack(pady=5)                    
+
+                    tabla_reciben.heading("#0", text = "Nombre", anchor="center")                    
+
+                    scrollbar3 = CTkScrollbar(vent_reciben, command = tabla_reciben.yview, width = 18)
+                    scrollbar3.place(in_ = tabla_reciben, relheigh = 1, relx = 1)
+
+                    tabla_reciben.config(yscrollcommand = scrollbar3.set)
+
+                    # ahora llenar la tabla 
                     conn = mysql.connector.connect(
                         host = "localhost",
                         user = "lilly",
@@ -3846,22 +4557,44 @@ class Ventas(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()           
-                    sql = f""" SELECT * FROM `recibe` WHERE `Nombre` = "{temp.texto_recibe.get()}" """
+                    sql = f""" SELECT `Nombre` FROM `recibe` WHERE `Nombre` LIKE '%{temp.texto_recibe.get()}%'; """
                     cursor.execute(sql)
-                    for index in cursor:
-                        temp.texto_direccion.insert(0,index[2])
-                        temp.texto_telefono.insert(0,index[3]) 
-                                
+                    for index in cursor:                        
+                        tabla_reciben.insert("",END, text = index[0],)
 
-                temp.texto_recibe = CTkComboBox(temp,values=reciben,width=200,command=llenar_recibe)
-                temp.texto_recibe.set("Recibe...")              
-                temp.texto_recibe.pack(pady=5)                
+                    # ahora al dar 2ble click se escribira el nombre en el campo
+                    def escribir_recibe(event):
+                        global vent_reciben                        
+                        temp.texto_recibe.delete(0,END)                        
+                        temp.texto_direccion.delete(0,END) 
+                        temp.texto_telefono.delete(0,END) 
 
-                temp.texto_direccion = CTkEntry(temp, placeholder_text="Direccion ...", width=200)
-                temp.texto_direccion.pack(pady=5)
+                        seleccion = tabla_reciben.selection()
+                        if seleccion:
+                            item = seleccion[0]                
+                            recibe = tabla_reciben.item(item, "text") 
 
-                temp.texto_telefono = CTkEntry(temp, placeholder_text="Telefono ...", width=200)
-                temp.texto_telefono.pack(pady=5)
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "lilly",
+                            password = "123456",
+                            database = "lilly"
+                            )
+                        cursor = conn.cursor()           
+                        sql = f""" SELECT * FROM `recibe` WHERE `Nombre` = "{recibe}" """
+                        cursor.execute(sql)
+                        for index in cursor: 
+                            temp.texto_recibe.insert(0,index[1])
+                            temp.texto_direccion.insert(0,index[2])
+                            temp.texto_telefono.insert(0,index[3])
+
+                        vent_reciben.destroy()   
+                        vent_reciben = None                 
+                        
+                    tabla_reciben.bind("<Double-1>", escribir_recibe)              
+
+
+                temp.texto_recibe.bind("<KeyRelease>", opciones_recibe)        
 
                 def guardar_recibe():
                     if temp.texto_recibe.get() == "" or temp.texto_direccion.get()== "" or temp.texto_telefono.get()== "":
@@ -3904,9 +4637,46 @@ class Ventas(CTkToplevel):
                 temp.btn_guardar_recibe = CTkButton(temp, text="Guardar", command=guardar_recibe)
                 temp.btn_guardar_recibe.pack(pady = 5)
 
+                temp.label_mensajeria = CTkLabel(temp, text="---------- Mensajeria ----------")
+                temp.label_mensajeria.pack(pady=5)                
+
+                temp.texto_mensajeria = CTkEntry(temp,width=200,placeholder_text="Monto...")                
+                temp.texto_mensajeria.pack(pady=5)
+
                 def ejecutar_venta():
                     conf = messagebox.askokcancel("Confirmar","Se van a vender los productos del carrito")
                     if conf:
+                        # llevemos la mensajeria a la bd 
+                        id_mens = 1
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "lilly",
+                            password = "123456",
+                            database = "lilly"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = """SELECT MAX(Id) FROM `mensajeria`;"""
+                        cursor.execute(sql)
+                        for index in cursor:
+                            if index[0] == None:
+                                pass
+                            else:
+                                id_mens = index[0] + 1 
+
+                        # llevemos la mensajeria a la bd 
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "lilly",
+                            password = "123456",
+                            database = "lilly"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = f""" INSERT INTO `mensajeria`(`Id`, `Fecha`, `Monto`) VALUES ('{id_mens}','{fecha_actual}','{temp.texto_mensajeria.get()}') """
+                        cursor.execute(sql)
+                        conn.commit()
+
                         # hallemos el id de la venta
                         id_venta = 1
                         conn = mysql.connector.connect(
@@ -3982,9 +4752,7 @@ class Ventas(CTkToplevel):
                                 f.write("PRODUCTOS VENDIDOS:\n")
                                 f.write("----------------------------------------\n")
                                 for prod in productos:                                    
-                                    f.write(f"Nombre: {prod[1]}\n")
-                                    f.write(f"Cantidad: {prod[4]}\n")                                    
-                                    f.write("----------------------------------------\n")                            
+                                    f.write(f" {prod[4]}  {prod[1]}\n")                                                      
                             
                             messagebox.showinfo("Exito", f"Comprobante guardado en:\n{archivo_txt}")
 
@@ -4263,31 +5031,27 @@ class ControlVentas(CTkToplevel):
 
         #######################################################   
 
-        estilos_tablas()  
+        estilos_tablas()          
 
-        self.tabla = ttk.Treeview(self, columns = ("Fecha","Codigo", "Nombre", "Costo USD", "Precio", "Cantidad", "Envia", "Recibe"), show="headings")
+        self.tabla = ttk.Treeview(self, columns = ("Fecha","Envia", "Recibe", "Precio", "Costo", "Ganancia"), show="headings")
         self.tabla.column("#0", width = 100, anchor="center")
         self.tabla.column("Fecha", width = 100, anchor="center")
-        self.tabla.column("Codigo", width = 75, anchor="center")
-        self.tabla.column("Nombre", width = 200, anchor="center")
-        self.tabla.column("Costo USD", width = 75, anchor="center")       
-        self.tabla.column("Precio", width = 75, anchor="center")        
-        self.tabla.column("Cantidad", width = 75, anchor="center")
-        self.tabla.column("Envia", width = 200, anchor="center")
+        self.tabla.column("Envia", width = 200, anchor="center")        
         self.tabla.column("Recibe", width = 200, anchor="center")
+        self.tabla.column("Precio", width = 100, anchor="center") 
+        self.tabla.column("Costo", width = 100, anchor="center")               
+        self.tabla.column("Ganancia", width = 100, anchor="center")        
 
         self.tabla.place(x = 30, y = 200)        
         self.tabla.config(height = 11)
 
         self.tabla.heading("#0", text = "Id", anchor="center")
         self.tabla.heading("Fecha", text = "Fecha", anchor="center")
-        self.tabla.heading("Codigo", text = "Codigo", anchor="center")
-        self.tabla.heading("Nombre", text = "Nombre", anchor="center")
-        self.tabla.heading("Costo USD", text = "Costo USD", anchor="center")        
-        self.tabla.heading("Precio", text = "Precio", anchor="center")        
-        self.tabla.heading("Cantidad", text = "Cantidad", anchor="center")
         self.tabla.heading("Envia", text = "Envia", anchor="center")
         self.tabla.heading("Recibe", text = "Recibe", anchor="center")
+        self.tabla.heading("Precio", text = "Precio", anchor="center")        
+        self.tabla.heading("Costo", text = "Costo", anchor="center")        
+        self.tabla.heading("Ganancia", text = "Ganancia", anchor="center")        
 
         scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
         scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
@@ -4295,28 +5059,51 @@ class ControlVentas(CTkToplevel):
         self.tabla.config(yscrollcommand = scrollbar.set)
 
         def llenar_tabla(event):
-            try:
-                self.tabla.delete(*self.tabla.get_children())
-                conn = mysql.connector.connect(
-                    host = "localhost",
-                    user = "lilly",
-                    password = "123456",
-                    database = "lilly"
-                    )
-                cursor = conn.cursor()
+            self.tabla.delete(*self.tabla.get_children())
+            conn = mysql.connector.connect(
+                host = "localhost",
+                user = "lilly",
+                password = "123456",
+                database = "lilly"
+                )
+            cursor = conn.cursor()
+            if self.texto_fecha_inicial.get() == "" or self.texto_fecha_final.get() == "":
+                pass
 
-                if self.texto_fecha_inicial.get() == "" or self.texto_fecha_final.get() == "":
-                    sql = f""" SELECT * FROM salidas WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' """
-
-                else:
-                    sql = f""" SELECT * FROM salidas WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' and `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
-
+            else:
+                sql = f""" SELECT * FROM salidas WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
                 cursor.execute(sql)
-                for index in cursor:
-                    self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],index[6],index[7],index[8],))  
 
-            except:
-                error = messagebox.showerror("Error","No se pudo actualizar la tabla")
+            ventas_agrupadas = {}
+            # Procesar cada registro
+            for index in cursor:
+                id_venta = index[0]
+                
+                if id_venta not in ventas_agrupadas:
+                    ventas_agrupadas[id_venta] = {
+                        'fecha': index[1],
+                        'precio_total': 0,
+                        'costo_total': 0,
+                        'envia': index[7],
+                        'recibe': index[8]
+                    }
+                
+                # Acumular precios y costos
+                ventas_agrupadas[id_venta]['precio_total'] += index[5] * index[6]
+                ventas_agrupadas[id_venta]['costo_total'] += index[4] * index[6]
+            
+            # Insertar datos agrupados en la tabla
+            for id_venta, datos in ventas_agrupadas.items():
+                ganancia = datos['precio_total'] - datos['costo_total']
+                self.tabla.insert("", END, text=id_venta, values=(
+                    datos['fecha'],
+                    datos['envia'],
+                    datos['recibe'],
+                    round(datos['precio_total'], 2),
+                    round(datos['costo_total'], 2),
+                    round(ganancia, 2)
+                ))
+
 
 
         self.label_fechas = CTkLabel(self,text="---------- Control de fechas ----------")
@@ -4388,21 +5175,7 @@ class ControlVentas(CTkToplevel):
 
 
         self.btn_fecha_final = CTkButton(self,text="...",command=fecha_final, width = 27, height = 27)
-        self.btn_fecha_final.place(x=350 ,y=130 )
-
-
-        self.label_buscador = CTkLabel(self,text="---------- Buscador ----------")
-        self.label_buscador.place(x=600,y=50)
-
-        self.texto_buscador_codigo = CTkEntry(self,placeholder_text="Buscar por codigo ...")
-        self.texto_buscador_codigo.place(x=600,y=90)          
-
-        self.texto_buscador_codigo.bind("<KeyRelease>", llenar_tabla) 
-
-        self.texto_buscador_nombre = CTkEntry(self,placeholder_text="Buscar por nombre ...")
-        self.texto_buscador_nombre.place(x=600,y=130) 
-
-        self.texto_buscador_nombre.bind("<KeyRelease>", llenar_tabla )
+        self.btn_fecha_final.place(x=350 ,y=130 )        
 
         llenar_tabla(True)
 
@@ -4416,8 +5189,8 @@ class ControlVentas(CTkToplevel):
                 item = seleccion[0]                
                 id_venta = self.tabla.item(item, "text") 
                 fecha_venta = self.tabla.item(item, "values")[0] 
-                envia_venta = self.tabla.item(item, "values")[6] 
-                recibe_venta = self.tabla.item(item, "values")[7] 
+                envia_venta = self.tabla.item(item, "values")[1] 
+                recibe_venta = self.tabla.item(item, "values")[2] 
 
             # ahora vamos a mostrar una ventana con esta venta en especifico
             temp = CTkToplevel()
@@ -4744,8 +5517,6 @@ class ControlVentas(CTkToplevel):
 
 
 
-
-
 # **********************************************************************************
 # ****************************  Consulta Totales ***********************************
 # **********************************************************************************
@@ -4816,50 +5587,59 @@ class ConsultaTotales(CTkToplevel):
         self.label_costos2 = CTkLabel(self, textvariable=string_costos)
         self.label_costos2.place(x=700,y=220)
 
+        self.label_regalo = CTkLabel(self, text="Regalos: ")
+        self.label_regalo.place(x=500,y=260)
+
+        string_regalo = StringVar()
+        string_regalo.set("0")
+
+        self.label_regalo2 = CTkLabel(self, textvariable=string_regalo)
+        self.label_regalo2.place(x=700,y=260)
+
         self.label_ganancia = CTkLabel(self, text="Total Ganancias: ")
-        self.label_ganancia.place(x=500,y=260)
+        self.label_ganancia.place(x=500,y=300)
 
         string_ganancia = StringVar()
         string_ganancia.set("0")
 
         self.label_ganancia2 = CTkLabel(self, textvariable=string_ganancia)
-        self.label_ganancia2.place(x=700,y=260)
+        self.label_ganancia2.place(x=700,y=300)
 
         self.label_mas_vende = CTkLabel(self, text="Producto Mas Vendido: ")
-        self.label_mas_vende.place(x=500,y=300)
+        self.label_mas_vende.place(x=500,y=340)
 
         string_mas_vende = StringVar()
         string_mas_vende.set("0")
 
         self.label_mas_vende2 = CTkLabel(self, textvariable=string_mas_vende)
-        self.label_mas_vende2.place(x=700,y=300)
+        self.label_mas_vende2.place(x=700,y=340)
 
         self.label_menos_vende = CTkLabel(self, text="Producto Menos Vendido: ")
-        self.label_menos_vende.place(x=500,y=340)
+        self.label_menos_vende.place(x=500,y=380)
 
         string_menos_vende = StringVar()
         string_menos_vende.set("0")
 
         self.label_menos_vende2 = CTkLabel(self, textvariable=string_menos_vende)
-        self.label_menos_vende2.place(x=700,y=340)
+        self.label_menos_vende2.place(x=700,y=380)
 
         self.label_mas_ganancia = CTkLabel(self, text="Producto Mas Ganancia: ")
-        self.label_mas_ganancia.place(x=500,y=380)
+        self.label_mas_ganancia.place(x=500,y=420)
 
         string_mas_ganancia = StringVar()
         string_mas_ganancia.set("0")
 
         self.label_mas_ganancia2 = CTkLabel(self, textvariable=string_mas_ganancia)
-        self.label_mas_ganancia2.place(x=700,y=380)
+        self.label_mas_ganancia2.place(x=700,y=420)
 
         self.label_menos_ganancia = CTkLabel(self, text="Producto Menos Ganancia: ")
-        self.label_menos_ganancia.place(x=500,y=420)
+        self.label_menos_ganancia.place(x=500,y=460)
 
         string_menos_ganancia = StringVar()
         string_menos_ganancia.set("0")
 
         self.label_menos_ganancia2 = CTkLabel(self, textvariable=string_menos_ganancia)
-        self.label_menos_ganancia2.place(x=700,y=420)
+        self.label_menos_ganancia2.place(x=700,y=460)        
 
         # ahora vamos a generar la funcion para mostrar los datos 
         def consulta():
@@ -4881,9 +5661,23 @@ class ConsultaTotales(CTkToplevel):
                     cursor.execute(sql)
                     for index in cursor:                        
                         ingresos += index[0]*index[1]
+
+                    # hay que sumarle las mensajerias
+                    mensajeria = 0
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "lilly",
+                        password = "123456",
+                        database = "lilly"
+                        )
+                    cursor = conn.cursor()                    
+                    sql = f""" SELECT  `Monto` FROM `mensajeria` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    cursor.execute(sql)
+                    for index in cursor:                        
+                        mensajeria += index[0]
                         
 
-                    string_ingresos.set(round(ingresos,2))
+                    string_ingresos.set(round(ingresos + mensajeria,2))
                     ####################################################
 
                     # ahora veremos total de gastos asociados 
@@ -4929,7 +5723,7 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT  `CostoUsd`, `Cantidad` FROM `entradas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    sql = f""" SELECT  `CostoUsd`, `Cantidad` FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
                     cursor.execute(sql)
                     for index in cursor:
                         costos_usd += index[0]*index[1]
@@ -4937,8 +5731,26 @@ class ConsultaTotales(CTkToplevel):
                     string_costos.set(round(costos_usd, 2))
                     ########################################################
 
+                    # ahora los regalos
+                    regalos = 0                    
+                    conn = mysql.connector.connect(
+                        host = "localhost",
+                        user = "lilly",
+                        password = "123456",
+                        database = "lilly"
+                        )
+                    cursor = conn.cursor()                    
+                    sql = f""" SELECT `CostoUsd`, `Cantidad` FROM `regalos` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    cursor.execute(sql)
+                    for index in cursor:
+                        regalos += index[0]*index[1]  
+
+                    string_regalo.set(regalos)
+
+                    ############################################################
+
                     # ahora veamos las ganancias 
-                    ganancias = ingresos - asociados - salarios - costos_usd
+                    ganancias = ingresos - asociados - salarios - costos_usd - regalos
                     string_ganancia.set(round(ganancias, 2))
                     ########################################################
 
@@ -4952,7 +5764,7 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT Codigo, Nombre, SUM(Cantidad) AS total_unidades_vendidas FROM salidas WHERE Fecha BETWEEN "{self.texto_fecha_inicial.get()}" AND "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY total_unidades_vendidas DESC LIMIT 1; """
+                    sql = f""" SELECT Codigo, Nombre, SUM(Cantidad) AS total_unidades_vendidas FROM salidas WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY total_unidades_vendidas DESC LIMIT 1; """
                     cursor.execute(sql)
                     for index in cursor:
                         nombre = index[1]
@@ -4972,7 +5784,7 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT Codigo, Nombre, SUM(Cantidad) AS total_unidades_vendidas FROM salidas WHERE Fecha BETWEEN "{self.texto_fecha_inicial.get()}" AND "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY total_unidades_vendidas ASC LIMIT 1; """
+                    sql = f""" SELECT Codigo, Nombre, SUM(Cantidad) AS total_unidades_vendidas FROM salidas WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY total_unidades_vendidas ASC LIMIT 1; """
                     cursor.execute(sql)
                     for index in cursor:
                         nombre = index[1]
@@ -4993,7 +5805,7 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT Codigo, Nombre, SUM((Precio - CostoUsd) * Cantidad) AS ganancia_total FROM salidas WHERE Fecha BETWEEN "{self.texto_fecha_inicial.get()}" AND "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY ganancia_total DESC LIMIT 1; """
+                    sql = f""" SELECT Codigo, Nombre, SUM((Precio - CostoUsd) * Cantidad) AS ganancia_total FROM salidas WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY ganancia_total DESC LIMIT 1; """
                     cursor.execute(sql)
                     for index in cursor:
                         nombre = index[1]
@@ -5014,7 +5826,7 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT Codigo, Nombre, SUM((Precio - CostoUsd) * Cantidad) AS ganancia_total FROM salidas WHERE Fecha BETWEEN "{self.texto_fecha_inicial.get()}" AND "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY ganancia_total ASC LIMIT 1; """
+                    sql = f""" SELECT Codigo, Nombre, SUM((Precio - CostoUsd) * Cantidad) AS ganancia_total FROM salidas WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY ganancia_total ASC LIMIT 1; """
                     cursor.execute(sql)
                     for index in cursor:
                         nombre = index[1]
@@ -5024,6 +5836,8 @@ class ConsultaTotales(CTkToplevel):
                     string_menos_ganancia.set(nombre + string)
 
                     ############################################################
+
+                    
 
                 except:
                     error = messagebox.showerror("Error","No se ha podido mostrar todos los datos \n Revise la informacion escrita en los campos de las fechas")
@@ -5216,6 +6030,232 @@ class Deficit(CTkToplevel):
 
         self.btn = CTkButton(self,text="Hacer Txt", command=hacer_txt)
         self.btn.place(x=50,y=450)
+
+
+
+# **********************************************************************************
+# ************************************  Clientes ************************************
+# **********************************************************************************
+
+class Clientes(CTkToplevel):
+    def __init__(self):
+        self = CTkToplevel()
+        self.title("Clientes")    
+        htotal = self.winfo_screenheight()
+        wtotal = self.winfo_screenwidth()
+        wventana = 1000
+        hventana = 600
+        posx = round(wtotal/2-wventana/2)
+        posy = round(htotal/2-hventana/2)
+        self.geometry(f"+{posx}+{posy}")
+        self.geometry("1000x600") 
+        self.resizable(False,False)
+        self.after(250, lambda: self.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico'))   
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after(200, lambda: self.attributes('-topmost', False))  
+
+        ############ agregar el fondo de pantalla #########
+      
+        self.imagen = CTkImage (light_image = Image.open("D:/Lilly/imagenes funcionamiento/fondo.jpg"), size = (1000,600))  
+
+        self.label_image = CTkLabel(self, image = self.imagen, text = "")  
+        self.label_image.place(x = 0, y = 0)      
+
+        #######################################################  
+
+        estilos_tablas()        
+        
+        self.tabla = ttk.Treeview(self, columns = ("Envios", "Monto"))
+        self.tabla.column("#0", width = 200)
+        self.tabla.column("Envios", width = 100)
+        self.tabla.column("Monto", width = 100)        
+
+        self.tabla.place(x = 50, y = 240)        
+        self.tabla.config(height = 10)
+
+        self.tabla.heading("#0", text = "Cliente")
+        self.tabla.heading("Envios", text = "Envios")
+        self.tabla.heading("Monto", text = "Monto")        
+
+        scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
+        scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
+
+        self.tabla.config(yscrollcommand = scrollbar.set)
+
+        def llenar_tabla():
+            self.tabla.delete(*self.tabla.get_children())
+            if self.texto_fecha_final.get() == "" or self.texto_fecha_inicial.get() == "":
+                pass
+
+            else:
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "lilly",
+                    password = "123456",
+                    database = "lilly"
+                    )
+                cursor = conn.cursor()
+
+                sql = f""" SELECT `Envia`, COUNT(DISTINCT `Id`) AS CantidadEnvios, SUM(`Precio` * `Cantidad`) AS MontoTotal FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" GROUP BY `Envia` ORDER BY `CantidadEnvios` DESC; """
+                cursor.execute(sql)
+                for index in cursor:
+                    self.tabla.insert("",END, text = index[0], values = (index[1],index[2],))  
+
+        self.label_fechas = CTkLabel(self,text="---------- Control de fechas ----------", bg_color="transparent")
+        self.label_fechas.place(x=50,y=50) 
+
+        self.texto_fecha_inicial = CTkEntry(self,placeholder_text="Fecha inicial ...")
+        self.texto_fecha_inicial.place(x=50,y=90) 
+
+        def fecha_inicial():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_inicial.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_inicial.insert(0,str(fecha_select))  
+                llenar_tabla()               
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack() 
+
+
+        self.btn_fecha_inicial = CTkButton(self,text="...",command=fecha_inicial, width = 27, height = 27)
+        self.btn_fecha_inicial.place(x=200 ,y=90 )
+
+        self.texto_fecha_final = CTkEntry(self,placeholder_text="Fecha final ...")
+        self.texto_fecha_final.place(x=50,y=130) 
+
+        def fecha_final():
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha_final.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha_final.insert(0,str(fecha_select))  
+                llenar_tabla()               
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack()
+
+
+        self.btn_fecha_final = CTkButton(self,text="...",command=fecha_final, width = 27, height = 27)
+        self.btn_fecha_final.place(x=200 ,y=130 )
+
+        # ahora configuremos para que al dar 2ble click desglose las ventas de esa persona que envia 
+        def double_click(event):
+            temp = CTkToplevel()
+            temp.title("Desglose") 
+            htotal = temp.winfo_screenheight()
+            wtotal = temp.winfo_screenwidth()
+            wventana = 1000
+            hventana = 600
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            temp.geometry(f"1000x600+{posx}+{posy}")
+            temp.lift()
+            temp.attributes('-topmost', True)
+            temp.after(200, lambda: temp.attributes('-topmost', False)) 
+            temp.after(250, lambda: temp.iconbitmap('D:/lilly/imagenes funcionamiento/lilly_icono.ico')) 
+
+            estilos_tablas()          
+
+            tabla = ttk.Treeview(temp, columns = ("Fecha","Codigo", "Nombre", "Costo USD", "Precio", "Cantidad", "Envia", "Recibe"), show="headings")
+            tabla.column("#0", width = 50, anchor="center")
+            tabla.column("Fecha", width = 100, anchor="center")
+            tabla.column("Codigo", width = 75, anchor="center")
+            tabla.column("Nombre", width = 150, anchor="center")
+            tabla.column("Costo USD", width = 75, anchor="center")       
+            tabla.column("Precio", width = 75, anchor="center")        
+            tabla.column("Cantidad", width = 75, anchor="center")
+            tabla.column("Envia", width = 150, anchor="center")
+            tabla.column("Recibe", width = 150, anchor="center")
+
+            tabla.place(x = 50, y = 100)        
+            tabla.config(height = 11)
+
+            tabla.heading("#0", text = "Id", anchor="center")
+            tabla.heading("Fecha", text = "Fecha", anchor="center")
+            tabla.heading("Codigo", text = "Codigo", anchor="center")
+            tabla.heading("Nombre", text = "Nombre", anchor="center")
+            tabla.heading("Costo USD", text = "Costo USD", anchor="center")        
+            tabla.heading("Precio", text = "Precio", anchor="center")        
+            tabla.heading("Cantidad", text = "Cantidad", anchor="center")
+            tabla.heading("Envia", text = "Envia", anchor="center")
+            tabla.heading("Recibe", text = "Recibe", anchor="center")
+
+            scrollbar2 = CTkScrollbar(temp, command = tabla.yview, width = 18)
+            scrollbar2.place(in_ = tabla, relheigh = 1, relx = 1)
+
+            tabla.config(yscrollcommand = scrollbar2.set)
+
+            def llenar_temp():
+                tabla.delete(*tabla.get_children())
+
+                seleccion = self.tabla.selection()
+                if seleccion:
+                    item = seleccion[0]                
+                    envia = self.tabla.item(item, "text") 
+                
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "lilly",
+                    password = "123456",
+                    database = "lilly"
+                    )
+                cursor = conn.cursor()
+
+                sql = f""" SELECT * FROM salidas WHERE `Envia` = '{envia}' and `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                cursor.execute(sql)
+                for index in cursor:
+                    tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],index[6],index[7],index[8],))  
+
+            llenar_temp()
+
+
+
+        self.tabla.bind("<Double-1>", double_click)
+
+
+
+
+
+
+
+
+
+
 
 conn.close()
 autenticacion = Autenticacion()
