@@ -2811,7 +2811,7 @@ class EjecutarExtra(CTkToplevel):
 
                 # cuando el id es de un cliente enonces se toma el nombre de la bd, si el id es 0 entonces se usa el campo                
                 if int(self.texto_id.get()) == 0:                    
-                    nombre_completo = self.texto_nombre.get()                                 
+                    nombre_completo = self.texto_nombre.get()                                      
 
                 else:
                     conn = mysql.connector.connect(
@@ -2919,10 +2919,32 @@ class Atrasados(CTkToplevel):
                 )
             cursor = conn.cursor()
 
-            sql = f""" SELECT `ID`, `Nombre`, `Apellido 1`, `Apellido 2`, `Modalidad`, `Trabajador`, `Fecha_Pago` FROM `clientes` WHERE `Fecha_Pago` < "{fecha_actual}" AND (`Nombre` LIKE '%{self.texto_nombre.get()}%' OR `Apellido 1` LIKE '%{self.texto_nombre.get()}%' OR `Apellido 2` LIKE '%{self.texto_nombre.get()}%') """
+            if self.texto_entrenador.get() == "Todos":
+                sql = f""" SELECT `ID`, `Nombre`, `Apellido 1`, `Apellido 2`, `Modalidad`, `Trabajador`, `Fecha_Pago` FROM `clientes` WHERE `Fecha_Pago` < "{fecha_actual}" AND (`Nombre` LIKE '%{self.texto_nombre.get()}%' OR `Apellido 1` LIKE '%{self.texto_nombre.get()}%' OR `Apellido 2` LIKE '%{self.texto_nombre.get()}%') """
+            else:
+                sql = f""" SELECT `ID`, `Nombre`, `Apellido 1`, `Apellido 2`, `Modalidad`, `Trabajador`, `Fecha_Pago` FROM `clientes` WHERE `Fecha_Pago` < "{fecha_actual}" AND (`Nombre` LIKE '%{self.texto_nombre.get()}%' OR `Apellido 1` LIKE '%{self.texto_nombre.get()}%' OR `Apellido 2` LIKE '%{self.texto_nombre.get()}%') AND `Trabajador` = "{self.texto_entrenador.get()}" """
+
             cursor.execute(sql)
             for index in cursor:                   
-                self.tabla.insert("",END, text = index[0], values=(index[1] + " " + index[2] + " " + index[3],index[4],index[5],index[6],(fecha_actual - index[6]).days,))                
+                self.tabla.insert("",END, text = index[0], values=(index[1] + " " + index[2] + " " + index[3],index[4],index[5],index[6],(fecha_actual - index[6]).days,))
+
+        entrenadores = ["Todos"]
+        conn = mysql.connector.connect(
+            host = "localhost",
+            user = "root",
+            password = "",
+            database = "gym_98MPH"
+            )
+        cursor = conn.cursor()
+
+        sql = f""" SELECT * FROM `entrenadores` """
+        cursor.execute(sql)
+        for index in cursor:
+            entrenadores.append(index[0])       
+
+        self.texto_entrenador = CTkComboBox(self,values=entrenadores,command=llenar_tabla)
+        self.texto_entrenador.set("Todos")
+        self.texto_entrenador.place(x=600,y=100)                        
 
         llenar_tabla(True)
 
