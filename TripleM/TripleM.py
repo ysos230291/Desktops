@@ -2528,7 +2528,7 @@ class Reabastecer(CTkToplevel):
 
                         num = float(temp.texto_costo_usd.get()) + float(temp.texto_costo_usd.get())*float(temp.texto_costo_usd_variable.get())/100
                         den = float(temp.texto_cantidad.get())
-                        
+
                         conn = mysql.connector.connect(
                             host = "localhost",
                             user = "triplem",
@@ -3262,10 +3262,10 @@ class ControlVentas(CTkToplevel):
                 cursor = conn.cursor()
 
                 if self.texto_fecha_inicial.get() == "" or self.texto_fecha_final.get() == "":
-                    sql = f""" SELECT * FROM salidas WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' """
+                    sql = f""" SELECT * FROM salidas WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' and `Tipo` LIKE '%{self.texto_buscador_tipo.get()}%' """
 
                 else:
-                    sql = f""" SELECT * FROM salidas WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' and `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    sql = f""" SELECT * FROM salidas WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' and `Tipo` LIKE '%{self.texto_buscador_tipo.get()}%' and `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
 
                 cursor.execute(sql)
                 for index in cursor:
@@ -3359,6 +3359,13 @@ class ControlVentas(CTkToplevel):
         self.texto_buscador_nombre.place(x=600,y=130) 
 
         self.texto_buscador_nombre.bind("<KeyRelease>", llenar_tabla )
+
+        self.texto_buscador_tipo = CTkEntry(self,placeholder_text="Buscar por Tipo ...")
+        self.texto_buscador_tipo.place(x=600,y=170) 
+
+        self.texto_buscador_tipo.bind("<KeyRelease>", llenar_tabla )
+
+
 
         llenar_tabla(True)
 
@@ -4506,11 +4513,12 @@ class ConsultaTotales(CTkToplevel):
                         password = "123456",
                         database = "triplem"
                         )
-                    cursor = conn.cursor()                    
+                    cursor = conn.cursor()                                       
                     sql = f""" SELECT  `Precio`, `Cantidad` FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
                     cursor.execute(sql)
                     for index in cursor:
                         ingresos += index[0]*index[1]
+                    
 
                     string_ingresos.set(round(ingresos,2))
                     ####################################################
