@@ -14,6 +14,7 @@ import copy
 import shutil
 import sqlite3
 import os
+import json
 
 
 
@@ -219,7 +220,7 @@ conn = mysql.connector.connect(
 cursor = conn.cursor()
 
 try:
-    sql = """CREATE TABLE `lilly`.`productos` (`Codigo` INT(11) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL,`Precio` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Categoria` VARCHAR(50) NOT NULL, `Minimo` INT NOT NULL ) ENGINE = InnoDB; """
+    sql = """CREATE TABLE `lilly`.`productos` (`Codigo` INT(11) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL,`Precio` FLOAT NOT NULL, `Cantidad` FLOAT NOT NULL, `Categoria` VARCHAR(50) NOT NULL, `Minimo` INT NOT NULL ) ENGINE = InnoDB; """
     cursor.execute(sql)
     conn.commit()
 except:
@@ -238,7 +239,7 @@ conn = mysql.connector.connect(
 cursor = conn.cursor()
 
 try:
-    sql = """CREATE TABLE `lilly`.`carrito` (`Codigo` VARCHAR(50) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL,`Precio` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Categoria` VARCHAR(50) NOT NULL  ) ENGINE = InnoDB; """
+    sql = """CREATE TABLE `lilly`.`carrito` (`Codigo` VARCHAR(50) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL,`Precio` FLOAT NOT NULL, `Cantidad` FLOAT NOT NULL, `Categoria` VARCHAR(50) NOT NULL  ) ENGINE = InnoDB; """
     cursor.execute(sql)
     conn.commit()
 except:
@@ -248,7 +249,7 @@ except:
 
 # ********************** creando tabla entradas ***********************************
 try:
-    sql = """CREATE TABLE `lilly`.`entradas` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` INT NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `Cantidad` INT NOT NULL,`Categoria` VARCHAR(50) NOT NULL) ENGINE = InnoDB;"""
+    sql = """CREATE TABLE `lilly`.`entradas` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` INT NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `Cantidad` FLOAT NOT NULL,`Categoria` VARCHAR(50) NOT NULL) ENGINE = InnoDB;"""
     cursor.execute(sql)
     conn.commit()
 except:
@@ -258,7 +259,7 @@ except:
 
 # ********************** creando tabla salidas ***********************************
 try:
-    sql = """CREATE TABLE `lilly`.`salidas` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` INT NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `Precio` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Envia` VARCHAR(50) NOT NULL, `Recibe` VARCHAR(50) NOT NULL) ENGINE = InnoDB;"""
+    sql = """CREATE TABLE `lilly`.`salidas` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` INT NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `Precio` FLOAT NOT NULL, `Cantidad` FLOAT NOT NULL, `Envia` VARCHAR(50) NOT NULL, `Recibe` VARCHAR(50) NOT NULL) ENGINE = InnoDB;"""
     cursor.execute(sql)
     conn.commit()
 except:
@@ -975,6 +976,56 @@ class Lobby(CTkToplevel):
         def agregar_nueva_licencia():                         
             nueva_licencia = NuevaLicencia()
 
+        def exportar_web_lobby():            
+            try:
+                # Crear la carpeta si no existe
+                carpeta = "D:/Lilly/respaldos"
+                if not os.path.exists(carpeta):
+                    os.makedirs(carpeta)
+                
+                # Nombre del archivo usando la fecha_actual existente
+                nombre_archivo = f"productos_{fecha_actual}.json"
+                ruta_completa = os.path.join(carpeta, nombre_archivo)
+                
+                # Conectar a la base de datos
+                conn = mysql.connector.connect(
+                    host="localhost",
+                    user="lilly",
+                    password="123456",
+                    database="lilly"
+                )
+                cursor = conn.cursor()
+                
+                # Consultar los productos
+                sql = """SELECT Codigo, Nombre, Precio, Cantidad, Categoria FROM productos"""
+                cursor.execute(sql)
+                
+                # Crear la lista de productos
+                productos = []
+                for row in cursor:
+                    producto = {
+                        "Codigo": row[0],
+                        "Nombre": row[1],
+                        "Precio": float(row[2]) if row[2] is not None else 0,
+                        "Cantidad": float(row[3]) if row[3] is not None else 0,
+                        "Categoria": row[4]
+                    }
+                    productos.append(producto)
+                
+                # Guardar el archivo JSON
+                with open(ruta_completa, 'w', encoding='utf-8') as f:
+                    json.dump(productos, f, ensure_ascii=False, indent=4)
+                
+                cursor.close()
+                conn.close()
+                
+                messagebox.showinfo("Éxito", f"Archivo JSON generado exitosamente:\n{ruta_completa}")
+                
+            except mysql.connector.Error as e:
+                messagebox.showerror("Error de Base de Datos", f"No se pudo conectar a la base de datos:\n{str(e)}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Error al generar el archivo:\n{str(e)}")
+
         def cerrar_cesion():
             self.destroy()
             autenticacion.deiconify()            
@@ -1033,6 +1084,7 @@ class Lobby(CTkToplevel):
         self.menu.add_cascade (label="Entradas", menu = entradas_menu)                       
         self.menu.add_cascade (label="Administrativo", menu = administrativo_menu)                 
         self.menu.add_cascade (label="Salva", command = salva_lobby)        
+        self.menu.add_cascade (label="Web", command = exportar_web_lobby)        
         self.menu.add_cascade(label="Usuarios", menu = usuario_menu)
         self.menu.add_cascade(label = "Licencia", menu = licencia_menu)
         self.menu.add_cascade(label="Salir", menu = salir_menu)
@@ -3172,7 +3224,7 @@ class Almacen(CTkToplevel):
                 )
             cursor = conn.cursor()
 
-            sql = f""" SELECT * FROM productos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%'; """
+            sql = f""" SELECT * FROM productos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' ORDER BY `Codigo` ASC; """
             cursor.execute(sql)
             for index in cursor:
                 self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],index[6],))         
@@ -3400,25 +3452,45 @@ class Almacen(CTkToplevel):
                     try:
                         conf = messagebox.askokcancel("Confirmar","Vamos a modificar el producto en la base de datos")
                         if conf:
-                            # modificar el producto en la bd 
+                            # verificar que el id nuevo no esta repetido
+                            repetido = False
                             conn = mysql.connector.connect(
                                 host = "localhost",
                                 user = "lilly",
                                 password = "123456",
                                 database = "lilly"
                                 )
-                            cursor = conn.cursor()                    
+                            cursor = conn.cursor()
 
-                            sql = f""" UPDATE `productos` SET `Codigo`='{root.texto_codigo.get()}',`Nombre`='{root.texto_nombre.get()}',`CostoUsd`='{root.texto_costo_usd.get()}',`Precio`='{root.texto_precio.get()}',`Cantidad`='{root.texto_cantidad.get()}',`Categoria`='{root.texto_categoria.get()}',`Minimo`='{root.texto_minimo.get()}' WHERE `Codigo` = "{codigo_almacen}";"""
+                            sql = f""" SELECT COUNT(`Codigo`) FROM `productos` WHERE `Codigo` = {root.texto_codigo.get()}; """
                             cursor.execute(sql)
-                            conn.commit()
+                            for index in cursor:                
+                                if index[0] > 0:
+                                    repetido = True
 
-                            completado = messagebox.showinfo("Completado","Se modifico el producto")
+                            if repetido:
+                                error = messagebox.showerror("Error","Ese codigo ya existe en la base de datos")
 
-                            llenar_tabla(True)
-                            alctualizar_equivalencia()
-                            root.destroy()
-                            temp.destroy()
+                            else:
+                                # modificar el producto en la bd 
+                                conn = mysql.connector.connect(
+                                    host = "localhost",
+                                    user = "lilly",
+                                    password = "123456",
+                                    database = "lilly"
+                                    )
+                                cursor = conn.cursor()                    
+
+                                sql = f""" UPDATE `productos` SET `Codigo`='{root.texto_codigo.get()}',`Nombre`='{root.texto_nombre.get()}',`CostoUsd`='{root.texto_costo_usd.get()}',`Precio`='{root.texto_precio.get()}',`Cantidad`='{root.texto_cantidad.get()}',`Categoria`='{root.texto_categoria.get()}',`Minimo`='{root.texto_minimo.get()}' WHERE `Codigo` = "{codigo_almacen}";"""
+                                cursor.execute(sql)
+                                conn.commit()
+
+                                completado = messagebox.showinfo("Completado","Se modifico el producto")
+
+                                llenar_tabla(True)
+                                alctualizar_equivalencia()
+                                root.destroy()
+                                temp.destroy()
 
                     except:
                         error = messagebox.showerror("Error","No se ha podido modificar el producto")
@@ -4056,8 +4128,8 @@ class Ventas(CTkToplevel):
                 sql = f""" SELECT `Cantidad` FROM `productos` WHERE `Codigo` = {cod} """
                 cursor.execute(sql)
                 for index in cursor:
-                    if index[0] >= int(temp.texto_cantidad.get()):
-                        pass
+                    if index[0] >= float(temp.texto_cantidad.get()):
+                        pass                    
                     else:
                         alcansa = False
                         error = messagebox.showerror("Error","No tienes esa cantidad en almacen")
@@ -5408,7 +5480,7 @@ class ControlVentas(CTkToplevel):
                         sql = f""" SELECT `Cantidad` FROM `productos` WHERE `Codigo` = "{cod}" """
                         cursor.execute(sql)
                         for index in cursor:
-                            if index[0] >= int(vent.texto_cantidad.get()):
+                            if index[0] >= float(vent.texto_cantidad.get()):
                                 pass
                             else:
                                 alcansa = False
