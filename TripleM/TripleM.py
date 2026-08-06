@@ -217,7 +217,7 @@ except:
 
 # ********************** creando tabla entradas ***********************************
 try:
-    sql = """CREATE TABLE `triplem`.`entradas` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` INT NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `Cantidad` INT NOT NULL,`Categoria` VARCHAR(50) NOT NULL, `Proveedor` VARCHAR(50) NOT NULL) ENGINE = InnoDB;"""
+    sql = """CREATE TABLE `triplem`.`entradas` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` VARCHAR(50) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `Cantidad` INT NOT NULL,`Categoria` VARCHAR(50) NOT NULL, `Proveedor` VARCHAR(50) NOT NULL) ENGINE = InnoDB;"""
     cursor.execute(sql)
     conn.commit()
 except:
@@ -225,7 +225,7 @@ except:
 
 # ********************** creando tabla salidas ***********************************
 try:
-    sql = """CREATE TABLE `triplem`.`salidas` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` INT NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `CostoCup` FLOAT NOT NULL, `Precio` FLOAT NOT NULL, `Moneda` VARCHAR(50) NOT NULL, `Cantidad` INT NOT NULL, `Cliente` VARCHAR(50) NOT NULL, `Tipo` VARCHAR(50) NOT NULL) ENGINE = InnoDB;"""
+    sql = """CREATE TABLE `triplem`.`salidas` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` VARCHAR(50) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `CostoCup` FLOAT NOT NULL, `Precio` FLOAT NOT NULL, `Moneda` VARCHAR(50) NOT NULL, `Cantidad` INT NOT NULL, `Cliente` VARCHAR(50) NOT NULL, `Tipo` VARCHAR(50) NOT NULL) ENGINE = InnoDB;"""
     cursor.execute(sql)
     conn.commit()
 except:
@@ -252,7 +252,7 @@ except:
 
 # ********************** creando tabla regalos ***********************************
 try:
-    sql = """CREATE TABLE `triplem`.`regalos` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` INT NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `CostoCup` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Concepto` VARCHAR(50) NOT NULL) ENGINE = InnoDB;"""
+    sql = """CREATE TABLE `triplem`.`regalos` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` VARCHAR(50) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `CostoUsd` FLOAT NOT NULL, `CostoCup` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Concepto` VARCHAR(50) NOT NULL) ENGINE = InnoDB;"""
     cursor.execute(sql)
     conn.commit()
 except:
@@ -1375,7 +1375,7 @@ class NuevoProducto(CTkToplevel):
                     )
                 cursor = conn.cursor()
 
-                sql = f""" SELECT COUNT(`Codigo`) FROM `productos` WHERE `Codigo` = {self.texto_codigo.get()}; """
+                sql = f""" SELECT COUNT(`Codigo`) FROM `productos` WHERE `Codigo` = "{self.texto_codigo.get()}"; """
                 cursor.execute(sql)
                 for index in cursor:                
                     if index[0] > 0:
@@ -1434,7 +1434,7 @@ class NuevoProducto(CTkToplevel):
                             )
                         cursor = conn.cursor()                    
 
-                        sql = f""" INSERT INTO `entradas`(`Id`, `Fecha`, `Codigo`, `Nombre`, `CostoUsd`, `Cantidad`, `Categoria`, `Proveedor`) VALUES ('{id_entrada}','{fecha_actual}','{self.texto_codigo.get()}','{self.texto_nombre.get()}','{costo}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}','{self.texto_proveedores.get()}') """
+                        sql = f""" INSERT INTO `entradas`(`Id`, `Fecha`, `Codigo`, `Nombre`, `CostoUsd`, `Cantidad`, `Categoria`, `Proveedor`) VALUES ('{id_entrada}','{fecha_actual}','{self.texto_codigo.get()}','{self.texto_nombre.get()}','{costo_unitario}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}','{self.texto_proveedores.get()}') """
                         cursor.execute(sql)
                         conn.commit()
 
@@ -2312,14 +2312,15 @@ class Reabastecer(CTkToplevel):
 
         estilos_tablas()        
         
-        self.tabla = ttk.Treeview(self, columns = ("Nombre", "Costo Usd", "Cantidad", "Categoria"))
-        self.tabla.column("#0", width = 100)
+        self.tabla = ttk.Treeview(self, columns = ("Nombre", "Costo Usd", "Cantidad", "Categoria", "Proveedor"))
+        self.tabla.column("#0", width = 75)
         self.tabla.column("Nombre", width = 200)
-        self.tabla.column("Costo Usd", width = 100)
-        self.tabla.column("Cantidad", width = 100)
+        self.tabla.column("Costo Usd", width = 75)
+        self.tabla.column("Cantidad", width = 75)
         self.tabla.column("Categoria", width = 100)
+        self.tabla.column("Proveedor", width = 100)
 
-        self.tabla.place(x = 100, y = 100)        
+        self.tabla.place(x = 50, y = 100)        
         self.tabla.config(height = 10)
 
         self.tabla.heading("#0", text = "Codigo")
@@ -2327,6 +2328,7 @@ class Reabastecer(CTkToplevel):
         self.tabla.heading("Costo Usd", text = "Costo Usd")
         self.tabla.heading("Cantidad", text = "Cantidad")
         self.tabla.heading("Categoria", text = "Categoria")
+        self.tabla.heading("Proveedor", text = "Proveedor")
 
         scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
         scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
@@ -2346,7 +2348,7 @@ class Reabastecer(CTkToplevel):
             sql = f""" SELECT * FROM productos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%'; """
             cursor.execute(sql)
             for index in cursor:
-                self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],))         
+                self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],))         
 
         # vamos a hacer un buscador 
 
@@ -2374,6 +2376,9 @@ class Reabastecer(CTkToplevel):
             if seleccion:
                 item = seleccion[0]                
                 codigo = self.tabla.item(item, "text")  
+                nombre = self.tabla.item(item, "values")[0]  
+                categoria = self.tabla.item(item, "values")[3]  
+                prov = self.tabla.item(item, "values")[4]              
 
             # vamos a crear la ventana modal
             temp = CTkToplevel()
@@ -2496,11 +2501,47 @@ class Reabastecer(CTkToplevel):
                             costo_antes = index[0]
                             cant_antes = index[1]
 
-                        numerador = costo_antes*cant_antes + float(temp.texto_costo_usd.get()) + float(temp.texto_costo_usd.get())*float(temp.texto_costo_usd_variable.get())
+                        numerador = costo_antes*cant_antes + float(temp.texto_costo_usd.get()) + float(temp.texto_costo_usd.get())*float(temp.texto_costo_usd_variable.get())/100
                         denominador = cant_antes + float(temp.texto_cantidad.get())
                         promedio = numerador/denominador
 
                         # llevemos los resultados a la base de datos
+                        # en la tabla de las entradas 
+                        # hallemos el id de la entrada
+                        id_entrada = 1
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "triplem",
+                            password = "123456",
+                            database = "triplem"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = """SELECT MAX(Id) FROM `entradas`;"""
+                        cursor.execute(sql)
+                        for index in cursor:
+                            if index[0] == None:
+                                pass
+
+                            else:
+                                id_entrada = index[0] + 1 
+
+                        num = float(temp.texto_costo_usd.get()) + float(temp.texto_costo_usd.get())*float(temp.texto_costo_usd_variable.get())/100
+                        den = float(temp.texto_cantidad.get())
+                        
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "triplem",
+                            password = "123456",
+                            database = "triplem"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = f""" INSERT INTO `entradas`(`Id`, `Fecha`, `Codigo`, `Nombre`, `CostoUsd`, `Cantidad`, `Categoria`, `Proveedor`) VALUES ('{id_entrada}','{fecha_actual}','{codigo}','{nombre}','{num/den}','{den}','{categoria}','{prov}') """
+                        cursor.execute(sql)
+                        conn.commit()
+
+                        # en la tabla producto 
                         conn = mysql.connector.connect(
                             host = "localhost",
                             user = "triplem",
@@ -3356,12 +3397,13 @@ class Almacen(CTkToplevel):
 
         estilos_tablas()        
         
-        self.tabla = ttk.Treeview(self, columns = ("Nombre", "Costo Usd", "Cantidad", "Categoria"))
-        self.tabla.column("#0", width = 100)
+        self.tabla = ttk.Treeview(self, columns = ("Nombre", "Costo Usd", "Cantidad", "Categoria", "Proveedor"))
+        self.tabla.column("#0", width = 50)
         self.tabla.column("Nombre", width = 200)
-        self.tabla.column("Costo Usd", width = 100)
-        self.tabla.column("Cantidad", width = 100)
+        self.tabla.column("Costo Usd", width = 75)
+        self.tabla.column("Cantidad", width = 75)
         self.tabla.column("Categoria", width = 100)
+        self.tabla.column("Proveedor", width = 100)
 
         self.tabla.place(x = 100, y = 100)        
         self.tabla.config(height = 10)
@@ -3371,11 +3413,12 @@ class Almacen(CTkToplevel):
         self.tabla.heading("Costo Usd", text = "Costo Usd")
         self.tabla.heading("Cantidad", text = "Cantidad")
         self.tabla.heading("Categoria", text = "Categoria")
+        self.tabla.heading("Proveedor", text = "Proveedor")
 
         scrollbar = CTkScrollbar(self, command = self.tabla.yview, width = 18)
         scrollbar.place(in_ = self.tabla, relheigh = 1, relx = 1)
 
-        self.tabla.config(yscrollcommand = scrollbar.set)
+        self.tabla.config(yscrollcommand = scrollbar.set)   
 
         def llenar_tabla(event):
             self.tabla.delete(*self.tabla.get_children())
@@ -3387,26 +3430,45 @@ class Almacen(CTkToplevel):
                 )
             cursor = conn.cursor()
 
-            sql = f""" SELECT * FROM productos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%'; """
+            if self.texto_buscador_proveedor.get() == "Proveedores...":
+                sql = f""" SELECT * FROM productos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%'; """
+            else:
+                sql = f""" SELECT * FROM productos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' and `Proveedor` = "{self.texto_buscador_proveedor.get()}"; """
+
             cursor.execute(sql)
             for index in cursor:
-                self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],))         
+                self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],))              
 
         # vamos a hacer un buscador 
 
         self.label_buscador = CTkLabel(self,text="------------------------------ Buscador ------------------------------")
         self.label_buscador.place(x=630,y=80)
 
-
         self.texto_buscador_codigo = CTkEntry(self,placeholder_text="Buscar por codigo ...")
-        self.texto_buscador_codigo.place(x=610,y=120)          
-
-        self.texto_buscador_codigo.bind("<KeyRelease>", llenar_tabla) 
+        self.texto_buscador_codigo.place(x=610,y=120) 
+        self.texto_buscador_codigo.bind("<KeyRelease>", llenar_tabla)         
 
         self.texto_buscador_nombre = CTkEntry(self,placeholder_text="Buscar por nombre ...")
         self.texto_buscador_nombre.place(x=770,y=120) 
+        self.texto_buscador_nombre.bind("<KeyRelease>", llenar_tabla)         
 
-        self.texto_buscador_nombre.bind("<KeyRelease>", llenar_tabla) 
+        prov = []        
+        conn = mysql.connector.connect(
+            host = "localhost",
+            user = "triplem",
+            password = "123456",
+            database = "triplem"
+            )
+        cursor = conn.cursor()
+
+        sql = """SELECT * FROM `proveedores`;"""
+        cursor.execute(sql)
+        for index in cursor:
+            prov.append(index[0])
+
+        self.texto_buscador_proveedor = CTkComboBox(self,values=prov,command=llenar_tabla)
+        self.texto_buscador_proveedor.set("Proveedores...")
+        self.texto_buscador_proveedor.place(x=610,y=160) 
 
         def doble_click(event):
             global codigo_almacen
@@ -3464,7 +3526,7 @@ class Almacen(CTkToplevel):
                 root.texto_nombre = CTkEntry(root)
                 root.texto_nombre.place(x = 750, y = 110)       
 
-                root.label_costo_usd = CTkLabel(root,text="Costo Lote Usd:", font=("Times New Roman",16))
+                root.label_costo_usd = CTkLabel(root,text="Costo Usd c/u:", font=("Times New Roman",16))
                 root.label_costo_usd.place(x = 630, y = 150)  
 
                 root.texto_costo_usd = CTkEntry(root)
@@ -3569,6 +3631,26 @@ class Almacen(CTkToplevel):
                 root.texto_categoria.set("...")
                 root.texto_categoria.place(x = 750, y = 230)
 
+                root.label_proveedores = CTkLabel(root,text="Proveedores:", font=("Times New Roman",16))
+                root.label_proveedores.place(x = 630, y = 230)  
+
+                proveedores = []
+                conn = mysql.connector.connect(
+                    host = "localhost",
+                    user = "triplem",
+                    password = "123456",
+                    database = "triplem"
+                    )
+                cursor = conn.cursor()
+
+                sql = """SELECT * FROM `proveedores`;"""
+                cursor.execute(sql)
+                for index in cursor:
+                    proveedores.append(index[0])
+
+                root.texto_proveedores = CTkComboBox(root, values=proveedores)                
+                root.texto_proveedores.place(x = 750, y = 230)
+
                 # vamos a llenar los campos con la info que ya existe en la base de datos
                 conn = mysql.connector.connect(
                     host = "localhost",
@@ -3586,6 +3668,7 @@ class Almacen(CTkToplevel):
                     root.texto_costo_usd.insert(0,index[2]*index[3])
                     root.texto_cantidad.insert(0,index[3])                    
                     root.texto_categoria.set(index[4])
+                    root.texto_proveedores.set(index[5])
 
 
                 def modificar_producto():
@@ -3599,9 +3682,9 @@ class Almacen(CTkToplevel):
                                 password = "123456",
                                 database = "triplem"
                                 )
-                            cursor = conn.cursor()                    
+                            cursor = conn.cursor()                                        
 
-                            sql = f""" UPDATE `productos` SET `Codigo`='{root.texto_codigo.get()}',`Nombre`='{root.texto_nombre.get()}',`CostoUsd`='{float(root.texto_costo_usd.get())/float(root.texto_cantidad.get())}',`Cantidad`='{root.texto_cantidad.get()}',`Categoria`='{root.texto_categoria.get()}' WHERE `Codigo` = "{codigo_almacen}"; """
+                            sql = f""" UPDATE `productos` SET `Codigo`='{root.texto_codigo.get()}',`Nombre`='{root.texto_nombre.get()}',`CostoUsd`='{float(root.texto_costo_usd.get())/float(root.texto_cantidad.get())}',`Cantidad`='{root.texto_cantidad.get()}',`Categoria`='{root.texto_categoria.get()}',`Proveedor`='{root.texto_proveedores.get()}' WHERE `Codigo` = {codigo_almacen}"""
                             cursor.execute(sql)
                             conn.commit()
 
@@ -3617,32 +3700,7 @@ class Almacen(CTkToplevel):
                 root.btn_modificar.place(x=650 ,y=500 )
 
             temp.btn_modificar = CTkButton(temp,text="Modificar", command=modificar)
-            temp.btn_modificar.pack(pady=20)   
-
-            def eliminar():
-                string = f"Vamos a eliminar el producto: {nombre_almacen}"
-                conf = messagebox.askokcancel("Confirmar",string)
-                if conf:
-                    try:
-                        conn = mysql.connector.connect(
-                            host = "localhost",
-                            user = "triplem",
-                            password = "123456",
-                            database = "triplem"
-                            )
-                        cursor = conn.cursor()
-
-                        sql = f""" DELETE FROM `productos` WHERE `Codigo` = "{codigo_almacen}" """
-                        cursor.execute(sql)
-                        conn.commit()
-                    
-                    except:
-                        error = messagebox.showerror("Error","No se pudo eliminar el producto")
-
-            temp.btn_eliminar = CTkButton(temp,text="Eliminar", command=eliminar)
-            temp.btn_eliminar.pack(pady=20) 
-
-
+            temp.btn_modificar.pack(pady=20) 
 
         self.tabla.bind("<Double-1>", doble_click)  
 
