@@ -3296,25 +3296,19 @@ class Almacen(CTkToplevel):
 
                 #######################################################   
 
-                # ************************** Labels *************************        
-
-                root.label_codigo = CTkLabel(root,text="Codigo:", font=("Times New Roman",16))
-                root.label_codigo.place(x = 630, y = 70)   
-
-                root.texto_codigo = CTkEntry(root)
-                root.texto_codigo.place(x = 750, y = 70)     
+                # ************************** Labels *************************              
 
                 root.label_nombre = CTkLabel(root,text="Nombre:", font=("Times New Roman",16))
-                root.label_nombre.place(x = 630, y = 110) 
+                root.label_nombre.place(x = 630, y = 70) 
                 
                 root.texto_nombre = CTkEntry(root)
-                root.texto_nombre.place(x = 750, y = 110)       
+                root.texto_nombre.place(x = 750, y = 70)       
 
                 root.label_costo_usd = CTkLabel(root,text="Costo Usd:", font=("Times New Roman",16))
-                root.label_costo_usd.place(x = 630, y = 150)  
+                root.label_costo_usd.place(x = 630, y = 110)  
 
                 root.texto_costo_usd = CTkEntry(root)
-                root.texto_costo_usd.place(x = 750, y = 150) 
+                root.texto_costo_usd.place(x = 750, y = 110) 
 
                 def cambio():
                     vent = CTkToplevel()
@@ -3386,22 +3380,22 @@ class Almacen(CTkToplevel):
                     vent.btn_cambiar.pack(pady=10)           
 
                 root.btn_cambio = CTkButton(root,text="...", width=30,command=cambio)      
-                root.btn_cambio.place(x = 900, y = 150) 
+                root.btn_cambio.place(x = 900, y = 110) 
 
                 root.label_precio = CTkLabel(root,text="Precio:", font=("Times New Roman",16))
-                root.label_precio.place(x = 630, y = 190)  
+                root.label_precio.place(x = 630, y = 150)  
 
                 root.texto_precio = CTkEntry(root)
-                root.texto_precio.place(x = 750, y = 190)   
+                root.texto_precio.place(x = 750, y = 150)   
 
                 root.label_cantidad = CTkLabel(root,text="Cantidad:", font=("Times New Roman",16))
-                root.label_cantidad.place(x = 630, y = 230)  
+                root.label_cantidad.place(x = 630, y = 190)  
 
                 root.texto_cantidad = CTkEntry(root)
-                root.texto_cantidad.place(x = 750, y = 230)                 
+                root.texto_cantidad.place(x = 750, y = 190)                 
 
                 root.label_categoria = CTkLabel(root,text="Categoria:", font=("Times New Roman",16))
-                root.label_categoria.place(x = 630, y = 270)  
+                root.label_categoria.place(x = 630, y = 230)  
 
                 categorias = []
                 conn = mysql.connector.connect(
@@ -3419,13 +3413,13 @@ class Almacen(CTkToplevel):
 
                 root.texto_categoria = CTkComboBox(root, values=categorias)
                 root.texto_categoria.set("...")
-                root.texto_categoria.place(x = 750, y = 270)
+                root.texto_categoria.place(x = 750, y = 230)
 
                 root.label_minimo = CTkLabel(root,text="Minimo:", font=("Times New Roman",16))
-                root.label_minimo.place(x = 630, y = 310)  
+                root.label_minimo.place(x = 630, y = 270)  
 
                 root.texto_minimo = CTkEntry(root)
-                root.texto_minimo.place(x = 750, y = 310) 
+                root.texto_minimo.place(x = 750, y = 270) 
 
                 # vamos a llenar los campos con la info que ya existe en la base de datos
                 conn = mysql.connector.connect(
@@ -3438,8 +3432,7 @@ class Almacen(CTkToplevel):
 
                 sql = f""" SELECT * FROM `productos` WHERE `Codigo` = "{codigo_almacen}" """
                 cursor.execute(sql)
-                for index in cursor:
-                    root.texto_codigo.insert(0,index[0])                     
+                for index in cursor:                                        
                     root.texto_nombre.insert(0,index[1]) 
                     root.texto_costo_usd.insert(0,index[2])
                     root.texto_cantidad.insert(0,index[4])                    
@@ -3451,46 +3444,26 @@ class Almacen(CTkToplevel):
                 def modificar_producto():
                     try:
                         conf = messagebox.askokcancel("Confirmar","Vamos a modificar el producto en la base de datos")
-                        if conf:
-                            # verificar que el id nuevo no esta repetido
-                            repetido = False
+                        if conf:                            
+                            # modificar el producto en la bd 
                             conn = mysql.connector.connect(
                                 host = "localhost",
                                 user = "lilly",
                                 password = "123456",
                                 database = "lilly"
                                 )
-                            cursor = conn.cursor()
+                            cursor = conn.cursor()                    
 
-                            sql = f""" SELECT COUNT(`Codigo`) FROM `productos` WHERE `Codigo` = {root.texto_codigo.get()}; """
+                            sql = f""" UPDATE `productos` SET `Codigo`='{root.texto_codigo.get()}',`Nombre`='{root.texto_nombre.get()}',`CostoUsd`='{root.texto_costo_usd.get()}',`Precio`='{root.texto_precio.get()}',`Cantidad`='{root.texto_cantidad.get()}',`Categoria`='{root.texto_categoria.get()}',`Minimo`='{root.texto_minimo.get()}' WHERE `Codigo` = "{codigo_almacen}";"""
                             cursor.execute(sql)
-                            for index in cursor:                
-                                if index[0] > 0:
-                                    repetido = True
+                            conn.commit()                           
 
-                            if repetido:
-                                error = messagebox.showerror("Error","Ese codigo ya existe en la base de datos")
+                            completado = messagebox.showinfo("Completado","Se modifico el producto")
 
-                            else:
-                                # modificar el producto en la bd 
-                                conn = mysql.connector.connect(
-                                    host = "localhost",
-                                    user = "lilly",
-                                    password = "123456",
-                                    database = "lilly"
-                                    )
-                                cursor = conn.cursor()                    
-
-                                sql = f""" UPDATE `productos` SET `Codigo`='{root.texto_codigo.get()}',`Nombre`='{root.texto_nombre.get()}',`CostoUsd`='{root.texto_costo_usd.get()}',`Precio`='{root.texto_precio.get()}',`Cantidad`='{root.texto_cantidad.get()}',`Categoria`='{root.texto_categoria.get()}',`Minimo`='{root.texto_minimo.get()}' WHERE `Codigo` = "{codigo_almacen}";"""
-                                cursor.execute(sql)
-                                conn.commit()
-
-                                completado = messagebox.showinfo("Completado","Se modifico el producto")
-
-                                llenar_tabla(True)
-                                alctualizar_equivalencia()
-                                root.destroy()
-                                temp.destroy()
+                            llenar_tabla(True)
+                            alctualizar_equivalencia()
+                            root.destroy()
+                            temp.destroy()
 
                     except:
                         error = messagebox.showerror("Error","No se ha podido modificar el producto")
