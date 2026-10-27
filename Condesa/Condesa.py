@@ -1387,7 +1387,39 @@ class NuevoInsumo(CTkToplevel):
             for index in cursor:                
                 ultimo_id.set(index[0])            
 
-        actualizar_id()            
+        actualizar_id()   
+
+        # vamos a poner la fecha manual
+        def escoger_fecha(event):
+            calendario = CTkToplevel()
+            calendario.title("Calendario") 
+            htotal = calendario.winfo_screenheight()
+            wtotal = calendario.winfo_screenwidth()
+            wventana = 300
+            hventana = 300
+            posx = round(wtotal/2-wventana/2)
+            posy = round(htotal/2-hventana/2)
+            calendario.geometry(f"+{posx}+{posy}")
+            calendario.lift()
+            calendario.attributes('-topmost', True)
+            calendario.after(200, lambda: self.attributes('-topmost', False))  
+
+            cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+            cal.pack()  
+
+            def fecha():
+                self.texto_fecha.delete(0,END)
+                fecha_select = cal.get_date()
+                self.texto_fecha.insert(0,str(fecha_select))                     
+                calendario.destroy()
+
+            btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+            btn.pack() 
+
+        self.texto_fecha = CTkEntry(self, placeholder_text="Fecha ...")
+        self.texto_fecha.place(x=750,y=30)
+
+        self.texto_fecha.bind("<ButtonRelease-1>", escoger_fecha)                 
 
         self.label_nombre = CTkLabel(self,text="Nombre:", font=("Times New Roman",16))
         self.label_nombre.place(x = 630, y = 70) 
@@ -1498,12 +1530,13 @@ class NuevoInsumo(CTkToplevel):
                         )
                     cursor = conn.cursor()                    
 
-                    sql = f""" INSERT INTO `entradas`(`Id`, `Fecha`, `Codigo`, `Nombre`, `Costo`, `Cantidad`, `Categoria`) VALUES ('{id_entrada}','{fecha_actual}','{id_insumo}','{self.texto_nombre.get()}','{self.texto_costo.get()}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}') """
+                    sql = f""" INSERT INTO `entradas`(`Id`, `Fecha`, `Codigo`, `Nombre`, `Costo`, `Cantidad`, `Categoria`) VALUES ('{id_entrada}','{self.texto_fecha.get()}','{id_insumo}','{self.texto_nombre.get()}','{self.texto_costo.get()}','{self.texto_cantidad.get()}','{self.texto_categoria.get()}') """
                     cursor.execute(sql)
                     conn.commit()
 
                     # limpiar los campos                     
                     self.texto_nombre.delete(0,END)
+                    self.texto_fecha.delete(0,END)
                     self.texto_costo.delete(0,END)
                     self.texto_um.delete(0,END)
                     self.texto_cantidad.delete(0,END)                        
@@ -1613,7 +1646,7 @@ class Reabastecer(CTkToplevel):
             seleccion = self.tabla.selection()
             if seleccion:
                 item = seleccion[0]                
-                codigo = self.tabla.item(item, "text")  
+                codigo = self.tabla.item(item, "text")            
 
             # vamos a crear la ventana modal
             temp = CTkToplevel()
@@ -1630,10 +1663,46 @@ class Reabastecer(CTkToplevel):
             temp.after(200, lambda: temp.attributes('-topmost', False)) 
             temp.after(250, lambda: temp.iconbitmap('D:/condesa/imagenes funcionamiento/condesa_icono.ico')) 
 
+            # vamos a poner la fecha manual
+            def escoger_fecha(event):
+                calendario = CTkToplevel()
+                calendario.title("Calendario") 
+                htotal = calendario.winfo_screenheight()
+                wtotal = calendario.winfo_screenwidth()
+                wventana = 300
+                hventana = 300
+                posx = round(wtotal/2-wventana/2)
+                posy = round(htotal/2-hventana/2)
+                calendario.geometry(f"+{posx}+{posy}")
+                calendario.lift()
+                calendario.attributes('-topmost', True)
+                calendario.after(200, lambda: self.attributes('-topmost', False))  
+    
+                cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+                cal.pack()  
+    
+                def fecha():
+                    temp.texto_fecha.delete(0,END)
+                    fecha_select = cal.get_date()
+                    temp.texto_fecha.insert(0,str(fecha_select))                     
+                    calendario.destroy()
+    
+                btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+                btn.pack() 
+    
+            temp.texto_fecha = CTkEntry(temp, placeholder_text="Fecha ...")
+            temp.texto_fecha.pack(pady=5)
+    
+            temp.texto_fecha.bind("<ButtonRelease-1>", escoger_fecha)
+            
             temp.texto_cantidad = CTkEntry(temp, placeholder_text="Cantidad ...")
             temp.texto_cantidad.pack(pady=5)
 
             def reabastecer_insumo():
+                nombre = ""
+                costo = 0               
+                categoria = ""
+
                 string = f"Vamos a reabastecer el producto de codigo {codigo}"
                 conf = messagebox.askokcancel("Confirmar",string)
                 if conf:
@@ -1651,10 +1720,61 @@ class Reabastecer(CTkToplevel):
                         cursor.execute(sql)
                         conn.commit()
 
+                        # ahora hay que anotar la entrada
+                        # ahora hallaremos la info que necesitamos para agregar la entrada
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "condesa",
+                            password = "123456",
+                            database = "condesa"
+                            )
+                        cursor = conn.cursor()
+            
+                        sql = f""" SELECT `Nombre`, `Costo`, `Categoria` FROM `insumos` WHERE `Codigo` = "{codigo}" """
+                        cursor.execute(sql)
+                        for index in cursor:
+                            nombre = index[0]
+                            costo = index[1]                            
+                            categoria = index[2]
+
+                        # hallemos el id de la entrada
+                        id_entrada = 1
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "condesa",
+                            password = "123456",
+                            database = "condesa"
+                            )
+                        cursor = conn.cursor()
+
+                        sql = """SELECT MAX(Id) FROM `entradas`;"""
+                        cursor.execute(sql)
+                        for index in cursor:
+                            if index[0] == None:
+                                pass
+
+                            else:
+                                id_entrada = index[0] + 1                    
+
+                        # agregar la entrada a la bd 
+                        conn = mysql.connector.connect(
+                            host = "localhost",
+                            user = "condesa",
+                            password = "123456",
+                            database = "condesa"
+                            )
+                        cursor = conn.cursor()                    
+
+                        sql = f""" INSERT INTO `entradas`(`Id`, `Fecha`, `Codigo`, `Nombre`, `Costo`, `Cantidad`, `Categoria`) VALUES ('{id_entrada}','{temp.texto_fecha.get()}','{codigo}','{nombre}','{costo}','{temp.texto_cantidad.get()}','{categoria}') """
+                        cursor.execute(sql)
+                        conn.commit()
+
                         temp.destroy()
                         llenar_reabastecer(True)
                     except:
                         error = messagebox.showerror("Error","No se pudo reabastecer el producto")
+
+
 
             temp.btn_reabastecer = CTkButton(temp,text="Reabastecer", command=reabastecer_insumo)
             temp.btn_reabastecer.pack(pady=10)  
@@ -1732,7 +1852,7 @@ class Insumos(CTkToplevel):
                 )
             cursor = conn.cursor()
 
-            sql = f""" SELECT SUM(`Costo`*`Cantidad`) FROM `insumos`; """
+            sql = f""" SELECT ROUND(SUM(`Costo` * `Cantidad`), 2) FROM `insumos`; """
             cursor.execute(sql)
             for index in cursor:
                 string.set("En Almacen: " + f"{index[0]} ")
@@ -4010,6 +4130,39 @@ class Ventas(CTkToplevel):
             temp.texto_cantidad = CTkEntry(temp, placeholder_text="Cantidad ...")
             temp.texto_cantidad.pack(pady=5)
 
+            # vamos a poner la fecha manual
+            def escoger_fecha(event):
+                calendario = CTkToplevel()
+                calendario.title("Calendario") 
+                htotal = calendario.winfo_screenheight()
+                wtotal = calendario.winfo_screenwidth()
+                wventana = 300
+                hventana = 300
+                posx = round(wtotal/2-wventana/2)
+                posy = round(htotal/2-hventana/2)
+                calendario.geometry(f"+{posx}+{posy}")
+                calendario.lift()
+                calendario.attributes('-topmost', True)
+                calendario.after(200, lambda: self.attributes('-topmost', False))  
+    
+                cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+                cal.pack()  
+    
+                def fecha():
+                    temp.texto_fecha.delete(0,END)
+                    fecha_select = cal.get_date()
+                    temp.texto_fecha.insert(0,str(fecha_select))                     
+                    calendario.destroy()
+    
+                btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+                btn.pack() 
+
+            temp.texto_fecha = CTkEntry(temp, placeholder_text="Fecha ...")
+            temp.texto_fecha.pack(pady=5)
+
+            temp.texto_fecha.bind("<ButtonRelease-1>", escoger_fecha)
+
+
             def salida():
                 if opcion.get() == 1:          # es una venta
                     string = f"Vas a vender {temp.texto_cantidad.get()} {values[0]}"
@@ -4155,7 +4308,7 @@ class Ventas(CTkToplevel):
                                 )
                             cursor = conn.cursor()
     
-                            sql = f""" INSERT INTO `salidas`(`Id`, `Fecha`, `Codigo`, `Nombre`, `Costo`, `Precio`, `Cantidad`, `Categoria`) VALUES ('{id_salida}','{fecha_actual}','{codigo}','{values[0]}','{values[1]}','{values[2]}','{temp.texto_cantidad.get()}','{values[3]}') """
+                            sql = f""" INSERT INTO `salidas`(`Id`, `Fecha`, `Codigo`, `Nombre`, `Costo`, `Precio`, `Cantidad`, `Categoria`) VALUES ('{id_salida}','{temp.texto_fecha.get()}','{codigo}','{values[0]}','{values[1]}','{values[2]}','{temp.texto_cantidad.get()}','{values[3]}') """
                             cursor.execute(sql)
                             conn.commit()
 
@@ -4309,7 +4462,7 @@ class Ventas(CTkToplevel):
                                 )
                             cursor = conn.cursor()
 
-                            sql = f""" INSERT INTO `regalos`(`Id`, `Fecha`, `Codigo`, `Nombre`, `Costo`, `Precio`, `Cantidad`, `Concepto`) VALUES ('{id_regalo}','{fecha_actual}','{codigo}','{values[0]}','{values[1]}','{values[2]}','{temp.texto_cantidad.get()}','{temp.texto_concepto_del_regalo.get()}') """
+                            sql = f""" INSERT INTO `regalos`(`Id`, `Fecha`, `Codigo`, `Nombre`, `Costo`, `Precio`, `Cantidad`, `Concepto`) VALUES ('{id_regalo}','{temp.texto_fecha.get()}','{codigo}','{values[0]}','{values[1]}','{values[2]}','{temp.texto_cantidad.get()}','{temp.texto_concepto_del_regalo.get()}') """
                             cursor.execute(sql)
                             conn.commit()
 
@@ -4920,8 +5073,51 @@ class ControlVentas(CTkToplevel):
 
         self.tabla.bind("<Double-1>", eliminar_venta)
 
+        def exportar_devolucion_excel():
+            # 1. Verificar que haya filas en la tabla
+            filas = self.tabla.get_children()
+            if len(filas) == 0:
+                messagebox.showwarning("Aviso", "No hay datos en la tabla para exportar")
+                return
 
+            # 2. Leer los datos directamente del Treeview (lo que se ve en ese momento)
+            datos = []
+            for item in filas:
+                valores = self.tabla.item(item, "values")
+                datos.append({
+                    "Id": self.tabla.item(item, "text"),
+                    "Fecha": valores[0],
+                    "Codigo": valores[1],
+                    "Nombre": valores[2],
+                    "Costo": valores[3],
+                    "Precio": valores[4],
+                    "Cantidad": valores[5],
+                    "Categoria": valores[6],
+                })
 
+            try:
+                # 3. Crear el DataFrame
+                df = pd.DataFrame(datos)
+
+                # 4. Carpeta destino
+                carpeta = "D:/Condesa/respaldos"
+                if not os.path.exists(carpeta):
+                    os.makedirs(carpeta)
+
+                # 5. Nombre del archivo con la fecha del día
+                nombre_archivo = f"informe_ventas_{fecha_actual}.xlsx"
+                ruta_completa = os.path.join(carpeta, nombre_archivo)
+
+                # 6. Exportar
+                df.to_excel(ruta_completa, index=False)
+
+                messagebox.showinfo("Éxito", f"Archivo creado exitosamente:\n{ruta_completa}")
+
+            except Exception as e:
+                messagebox.showerror("Error", f"No se pudo exportar el archivo:\n{str(e)}")
+
+        self.btn_exportar = CTkButton(self,text="Exportar",command=exportar_devolucion_excel)
+        self.btn_exportar.place(x=80,y=450)
 
 
 # **********************************************************************************
@@ -5035,6 +5231,38 @@ class Asociados(CTkToplevel):
             temp.after(200, lambda: temp.attributes('-topmost', False))  
             temp.after(250, lambda: temp.iconbitmap('D:/condesa/imagenes funcionamiento/condesa_icono.ico')) 
 
+            # vamos a poner la fecha manual
+            def escoger_fecha(event):
+                calendario = CTkToplevel()
+                calendario.title("Calendario") 
+                htotal = calendario.winfo_screenheight()
+                wtotal = calendario.winfo_screenwidth()
+                wventana = 300
+                hventana = 300
+                posx = round(wtotal/2-wventana/2)
+                posy = round(htotal/2-hventana/2)
+                calendario.geometry(f"+{posx}+{posy}")
+                calendario.lift()
+                calendario.attributes('-topmost', True)
+                calendario.after(200, lambda: self.attributes('-topmost', False))  
+    
+                cal = Calendar(calendario, selectmode = "day", date_pattern="yyyy-mm-dd")
+                cal.pack()  
+    
+                def fecha():
+                    temp.texto_fecha.delete(0,END)
+                    fecha_select = cal.get_date()
+                    temp.texto_fecha.insert(0,str(fecha_select))                     
+                    calendario.destroy()
+    
+                btn = CTkButton(calendario, text="Insertar Fecha", command=fecha)
+                btn.pack() 
+
+            temp.texto_fecha = CTkEntry(temp, placeholder_text="Fecha ...")
+            temp.texto_fecha.pack(pady=5)
+
+            temp.texto_fecha.bind("<ButtonRelease-1>", escoger_fecha)
+            
             temp.texto_concepto = CTkEntry(temp, placeholder_text="Concepto ...",width=300)
             temp.texto_concepto.pack(pady = 5)
 
@@ -5074,7 +5302,7 @@ class Asociados(CTkToplevel):
                             )
                         cursor = conn.cursor()
 
-                        sql = f""" INSERT INTO `asociados`(`Id`, `Fecha`, `Concepto`, `Monto`) VALUES ('{id_asociado}','{fecha_actual}','{temp.texto_concepto.get()}','{temp.texto_monto.get()}') """
+                        sql = f""" INSERT INTO `asociados`(`Id`, `Fecha`, `Concepto`, `Monto`) VALUES ('{id_asociado}','{temp.texto_fecha.get()}','{temp.texto_concepto.get()}','{temp.texto_monto.get()}') """
                         cursor.execute(sql)
                         conn.commit()
 
