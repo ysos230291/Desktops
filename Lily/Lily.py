@@ -4979,6 +4979,7 @@ class Ventas(CTkToplevel):
                             password = "123456",
                             database = "lilly"
                             )
+            
                         cursor = conn.cursor()           
                         sql = f""" SELECT * FROM `carrito` """
                         cursor.execute(sql)
