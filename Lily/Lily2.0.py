@@ -36,6 +36,39 @@ from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 _marca_arranque("carga de librerias (imports)")
 
 
+def traer_al_frente(ventana):
+    """Trae una ventana al frente y le da el foco. Se repite un instante despues, cuando Windows ya termino de
+    dibujarla y de ponerle el icono (en ese momento es cuando a veces se queda detras de otras ventanas)."""
+    def _frente():
+        try:
+            if not ventana.winfo_exists():
+                return
+            ventana.deiconify()
+            ventana.lift()
+            ventana.attributes('-topmost', True)
+            ventana.focus_force()
+            # se quita el "siempre arriba" para que no tape a otras ventanas despues
+            ventana.after(150, lambda: ventana.winfo_exists() and ventana.attributes('-topmost', False))
+        except Exception:
+            pass
+    _frente()
+    try:
+        ventana.after(300, _frente)
+    except Exception:
+        pass
+
+
+# Todas las ventanas secundarias del programa (menus, tablas, dialogos, calendarios...) se crean con CTkToplevel:
+# esta version hace que cada una pase al frente automaticamente al abrirse.
+_CTkToplevelOriginal = CTkToplevel
+
+class CTkToplevel(_CTkToplevelOriginal):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        traer_al_frente(self)
+
+
+
 
 conn = mysql.connector.connect(
     host = "localhost",
@@ -70,6 +103,28 @@ def leer_cantidad(texto, permitir_cero = False):
         messagebox.showerror("Error","La cantidad debe ser mayor que cero")
         return None
     return valor
+
+
+def leer_porcentaje(texto):
+    """Devuelve el porcentaje de descuento (entre 0 y 100) escrito en un campo, o None si no es valido.
+    Un campo vacio cuenta como 0. Acepta coma o punto decimal."""
+    texto = str(texto).strip().replace(",", ".")
+    if texto == "":
+        return 0.0
+    try:
+        valor = float(texto)
+    except ValueError:
+        return None
+    if valor != valor or valor < 0 or valor > 100:
+        return None
+    return valor
+
+
+def precio_con_descuento(precio, descuento):
+    """Precio de una unidad ya rebajado el % de descuento (a 2 decimales). Sin descuento, el precio queda igual."""
+    if descuento and descuento > 0:
+        return round(float(precio) * (1 - descuento / 100), 2)
+    return float(precio)
 
 
 def crear_respaldo_sql(ruta_completa):
@@ -870,9 +925,7 @@ class Lobby(CTkToplevel):
             # si la ventana de Ventas ya esta abierta, la traemos al frente en vez de abrir otra
             try:
                 if ventana_ventas is not None and ventana_ventas.winfo_exists():
-                    ventana_ventas.deiconify()
-                    ventana_ventas.lift()
-                    ventana_ventas.focus_force()
+                    traer_al_frente(ventana_ventas)
                     return
             except Exception:
                 pass
@@ -4381,12 +4434,13 @@ class Ventas(CTkToplevel):
         self.label_total = CTkLabel(self,textvariable = total)
         self.label_total.place(x=800,y = 430)
 
-        self.label_rebaja = CTkLabel(self,text = "Rebaja: ")
-        self.label_rebaja.place(x=650,y = 470)
+        # descuento en % que se le rebaja a cada producto al ejecutar la venta
+        self.label_descuento = CTkLabel(self,text = "Descuento %: ")
+        self.label_descuento.place(x=650,y = 470)
 
-        self.texto_rebaja = CTkEntry(self, width=50)
-        self.texto_rebaja.place(x=800,y = 470)
-        self.texto_rebaja.insert(0,0)
+        self.texto_descuento = CTkEntry(self, width=50)
+        self.texto_descuento.place(x=800,y = 470)
+        self.texto_descuento.insert(0,0)
 
         self.label_costo = CTkLabel(self,text = "Costo: ")
         self.label_costo.place(x=650,y = 510)
@@ -4407,7 +4461,7 @@ class Ventas(CTkToplevel):
         self.label_ganancia.place(x=800,y = 550)
 
         def actualizar_total(event):
-            # mostremos el total en el label que esta debajo
+            # leemos el carrito (precio, costo y cantidad de cada linea)
             conn = mysql.connector.connect(
                 host = "localhost",
                 user = "lilly",
@@ -4415,41 +4469,28 @@ class Ventas(CTkToplevel):
                 database = "lilly"
                 )
             cursor = conn.cursor()           
-            sql = f""" SELECT SUM(`Precio`*`Cantidad`) FROM `carrito` """
-            cursor.execute(sql)
-            for index in cursor:
-                if index[0] is None:
-                    total.set("0") 
-                    num_total = 0    
-                else:
-                    total.set(round(index[0] - float(self.texto_rebaja.get()),2)) 
-                    num_total = index[0] - float(self.texto_rebaja.get())          
-            
-            # -------------------------------------------
+            cursor.execute("SELECT `Precio`, `CostoUsd`, `Cantidad` FROM `carrito`")
+            filas = cursor.fetchall()
+            conn.close()
 
-            # mostremos el costo en el label que esta debajo
-            conn = mysql.connector.connect(
-                host = "localhost",
-                user = "lilly",
-                password = "123456",
-                database = "lilly"
-                )
-            cursor = conn.cursor()           
-            sql = f""" SELECT SUM(`CostoUsd`*`Cantidad`) FROM `carrito` """
-            cursor.execute(sql)
-            for index in cursor:
-                if index[0] is None:
-                    costo.set("0") 
-                    num_costo = 0    
-                else:
-                    costo.set(round(index[0],2)) 
-                    num_costo = index[0]               
+            if len(filas) == 0:
+                total.set("0")
+                costo.set("0")
+                ganancia.set("0")
+                return
 
-            # -------------------------------------------- 
-            # ahora mostremos la ganancia
-            ganancia.set(round(num_total - num_costo,2)) 
+            # descuento en % que se le rebaja a cada producto; mientras se escribe, un campo vacio cuenta como 0
+            descuento = leer_porcentaje(self.texto_descuento.get()) or 0.0
 
-        self.texto_rebaja.bind("<KeyRelease>", actualizar_total)
+            num_total = sum(precio_con_descuento(f[0], descuento) * float(f[2]) for f in filas)
+            num_costo = sum(float(f[1]) * float(f[2]) for f in filas)
+
+            # mostremos el total, el costo y la ganancia en los labels que estan debajo
+            total.set(round(num_total, 2))
+            costo.set(round(num_costo, 2))
+            ganancia.set(round(num_total - num_costo, 2))
+
+        self.texto_descuento.bind("<KeyRelease>", actualizar_total)
 
 
         def limpiar_carrito():
@@ -5069,7 +5110,16 @@ class Ventas(CTkToplevel):
                 temp.texto_mensajeria.pack(pady=5)
 
                 def ejecutar_venta():
-                    conf = messagebox.askokcancel("Confirmar","Se van a vender los productos del carrito")
+                    # validamos el descuento (en %) antes de preguntar y antes de tocar la base de datos
+                    descuento = leer_porcentaje(self.texto_descuento.get())
+                    if descuento is None:
+                        messagebox.showerror("Error","El descuento debe ser un numero entre 0 y 100")
+                        return
+
+                    mensaje_confirmar = "Se van a vender los productos del carrito"
+                    if descuento > 0:
+                        mensaje_confirmar += f"\nCon un descuento de {descuento:g}% en cada producto"
+                    conf = messagebox.askokcancel("Confirmar", mensaje_confirmar)
                     if not conf:
                         return
 
@@ -5118,7 +5168,7 @@ class Ventas(CTkToplevel):
                         # (el almacen ya se descontó cuando se agregaron al carrito)
                         for prod in productos:
                             cursor.execute("INSERT INTO `salidas`(`Id`, `Fecha`, `Codigo`, `Nombre`, `CostoUsd`, `Precio`, `Cantidad`, `Envia`, `Recibe`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-                                           (id_venta, fecha_actual, prod[0], prod[1], prod[2], prod[3], prod[4], temp.texto_envia.get(), temp.texto_recibe.get()))
+                                           (id_venta, fecha_actual, prod[0], prod[1], prod[2], precio_con_descuento(prod[3], descuento), prod[4], temp.texto_envia.get(), temp.texto_recibe.get()))
                         cursor.execute("DELETE FROM `carrito`")
                         conn.commit()
                         conn.close()
@@ -5131,6 +5181,10 @@ class Ventas(CTkToplevel):
                             pass
                         messagebox.showerror("Error","No se pudo completar la venta. No se hizo ningun cambio.")
                         return
+
+                    # la venta ya esta guardada: el descuento vuelve a 0 para que no se aplique sin querer a la proxima venta
+                    self.texto_descuento.delete(0, END)
+                    self.texto_descuento.insert(0, 0)
 
                     # ahora hagamos el tiket en txt (la venta ya quedo guardada: si esto falla no afecta al inventario)
                     try:
@@ -6610,6 +6664,7 @@ class Clientes(CTkToplevel):
 
 conn.close()
 autenticacion = Autenticacion()
+traer_al_frente(autenticacion)
 _marca_arranque("construccion de la ventana de inicio")
 autenticacion.after(10, _guardar_tiempos_arranque)
 autenticacion.mainloop()
