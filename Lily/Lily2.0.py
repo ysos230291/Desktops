@@ -5301,7 +5301,7 @@ class Ventas(CTkToplevel):
                                 f.write("PRODUCTOS VENDIDOS:\n")
                                 f.write("----------------------------------------\n")
                                 for prod in productos:                                    
-                                    f.write(f" {float(prod[4])}  {prod[1]}\n")                                                      
+                                    f.write(f" {format(float(prod[4]), '.3f').rstrip('0').rstrip('.')}  {prod[1]}\n")                                                      
                             
                             messagebox.showinfo("Exito", f"Comprobante guardado en:\n{archivo_txt}")
                     except Exception:
