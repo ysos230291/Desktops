@@ -105,6 +105,26 @@ def leer_cantidad(texto, permitir_cero = False):
     return valor
 
 
+def leer_numero(texto, nombre = "El valor", permitir_cero = True):
+    """Lee un numero escrito en un campo (acepta coma o punto decimal). Si no es valido muestra el error y devuelve None.
+    Sin esto, MySQL corta en silencio un monto escrito como 12,5 y lo guarda como 12."""
+    try:
+        valor = float(str(texto).strip().replace(",", "."))
+    except ValueError:
+        messagebox.showerror("Error", f"{nombre} debe ser un numero valido (ejemplo: 12 o 12.5)")
+        return None
+    if valor != valor or abs(valor) >= 1e12 or valor < 0 or (valor == 0 and not permitir_cero):
+        messagebox.showerror("Error", f"{nombre} debe ser un numero valido " + ("(no puede ser negativo)" if permitir_cero else "mayor que cero"))
+        return None
+    return valor
+
+
+def sqlq(valor):
+    """Prepara un valor para pegarlo dentro de comillas en una consulta SQL: una comilla o una barra en un nombre
+    (por ejemplo D'oro) ya no rompe la consulta."""
+    return str(valor).replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"')
+
+
 def leer_porcentaje(texto):
     """Devuelve el porcentaje de descuento (entre 0 y 100) escrito en un campo, o None si no es valido.
     Un campo vacio cuenta como 0. Acepta coma o punto decimal."""
@@ -844,12 +864,12 @@ class NuevaLicencia(CTkToplevel):
                             licencia_vacia = False                    
 
                     if licencia_vacia:
-                        sql = f""" INSERT INTO `licencias`(`codigo_lic`) VALUES ('{texto_encriptado}')"""
+                        sql = f""" INSERT INTO `licencias`(`codigo_lic`) VALUES ('{sqlq(texto_encriptado)}')"""
                         cursor.execute(sql)
                         conn.commit()
 
                     else:                                    
-                        sql = f""" UPDATE `licencias` SET `codigo_lic` = '{texto_encriptado}'"""
+                        sql = f""" UPDATE `licencias` SET `codigo_lic` = '{sqlq(texto_encriptado)}'"""
                         cursor.execute(sql)
                         conn.commit()
 
@@ -1016,7 +1036,7 @@ class Lobby(CTkToplevel):
                                     )
                                 cursor = conn.cursor()
 
-                                sql = f""" UPDATE `licencias` SET `pass_economia`='{root.texto_pass.get()}'  """
+                                sql = f""" UPDATE `licencias` SET `pass_economia`='{sqlq(root.texto_pass.get())}'  """
                                 cursor.execute(sql)
                                 conn.commit()
                                 root.destroy()
@@ -1116,7 +1136,7 @@ class Lobby(CTkToplevel):
                                     )
                                 cursor = conn.cursor()
 
-                                sql = f""" UPDATE `licencias` SET `pass_economia`='{root.texto_pass.get()}'  """
+                                sql = f""" UPDATE `licencias` SET `pass_economia`='{sqlq(root.texto_pass.get())}'  """
                                 cursor.execute(sql)
                                 conn.commit()
                                 root.destroy()
@@ -1201,7 +1221,7 @@ class Lobby(CTkToplevel):
                             )
                         cursor = conn.cursor()
 
-                        sql = f""" INSERT INTO `remitentes`(`Id`, `Nombre`, `Apellidos`, `Telefono`) VALUES ('{id_remitente}','{nombre}','{apellidos}','{telefono}') """
+                        sql = f""" INSERT INTO `remitentes`(`Id`, `Nombre`, `Apellidos`, `Telefono`) VALUES ('{sqlq(id_remitente)}','{sqlq(nombre)}','{sqlq(apellidos)}','{sqlq(telefono)}') """
                         cursor.execute(sql)
                         conn.commit()                    
 
@@ -1262,7 +1282,7 @@ class Lobby(CTkToplevel):
                             )
                         cursor = conn.cursor()
 
-                        sql = f""" INSERT INTO `receptores`(`Id`, `Nombre`, `Apellidos`, `Telefono`, `Direccion`) VALUES ('{id_receptor}','{nombre}','{apellidos}','{telefono}','{direccion}') """
+                        sql = f""" INSERT INTO `receptores`(`Id`, `Nombre`, `Apellidos`, `Telefono`, `Direccion`) VALUES ('{sqlq(id_receptor)}','{sqlq(nombre)}','{sqlq(apellidos)}','{sqlq(telefono)}','{sqlq(direccion)}') """
                         cursor.execute(sql)
                         conn.commit()
 
@@ -1706,7 +1726,7 @@ class EliminarUsuario(CTkToplevel):
                                 
                                 usuario = texto_nombre_usuario_eliminar.get()   
 
-                                sql = f"""DELETE FROM `usuarios` WHERE Usuario="{usuario}" """
+                                sql = f"""DELETE FROM `usuarios` WHERE Usuario="{sqlq(usuario)}" """
                                 cursor.execute(sql)
                                 conn.commit()
 
@@ -1776,15 +1796,6 @@ class Trabajadores(CTkToplevel):
 
         self.tabla.config(yscrollcommand = scrollbar.set)
 
-        def on_click(event):
-            global nombre_trabajadores
-            seleccion = self.tabla.selection()
-            if seleccion:
-                item = seleccion[0]                
-                nombre_trabajadores = self.tabla.item(item, "text")                
-
-        self.tabla.bind("<ButtonRelease-1>", on_click)
-
         def llenar_tabla():
             self.tabla.delete(*self.tabla.get_children())
             conn = mysql.connector.connect(
@@ -1852,7 +1863,7 @@ class Trabajadores(CTkToplevel):
                             )
                         cursor = conn.cursor()
 
-                        sql = f""" INSERT INTO `trabajadores`(`Nombre`) VALUES ('{temp.texto_nombre.get()}') """
+                        sql = f""" INSERT INTO `trabajadores`(`Nombre`) VALUES ('{sqlq(temp.texto_nombre.get())}') """
                         cursor.execute(sql)
                         conn.commit()
 
@@ -1866,9 +1877,14 @@ class Trabajadores(CTkToplevel):
 
 
         def eliminar():
-            global nombre_trabajadores           
+            seleccion = self.tabla.selection()
+            if not seleccion:
+                error = messagebox.showerror("Error","Selecciona un trabajador para eliminar")
+                return
+            nombre_trabajador = self.tabla.item(seleccion[0], "text")
+
             try:
-                string = f"Vas a eliminar a {nombre_trabajadores} de los trabajadores"
+                string = f"Vas a eliminar a {nombre_trabajador} de los trabajadores"
                 conf = messagebox.askokcancel("Confirmar",string)    
                 if conf:
                     conn = mysql.connector.connect(
@@ -1879,17 +1895,17 @@ class Trabajadores(CTkToplevel):
                         )
                     cursor = conn.cursor()
 
-                    sql = f""" DELETE FROM `trabajadores` WHERE `Nombre` = "{nombre_trabajadores}" """
+                    sql = f""" DELETE FROM `trabajadores` WHERE `Nombre` = "{sqlq(nombre_trabajador)}" """
                     cursor.execute(sql)
                     conn.commit()
 
                     llenar_tabla()
 
                     term = messagebox.showinfo("Terminado","Se ha eliminado el trabajador")
-                    nombre_trabajadores = None
 
-            except:
-                error = messagebox.showerror("Error","Selecciona un trabajador para eliminar") 
+            except Exception:
+                traceback.print_exc()
+                error = messagebox.showerror("Error","No se pudo eliminar el trabajador") 
 
 
         self.btn_agregar = CTkButton(self, text = "Agregar", command = agregar, width = 200, height = 50)
@@ -1945,15 +1961,6 @@ class Categorias(CTkToplevel):
         scrollbar_entrenadores.place(in_ = self.tabla, relheigh = 1, relx = 1)
 
         self.tabla.config(yscrollcommand = scrollbar_entrenadores.set)        
-
-        def on_click(event):
-            global nombre_categoria
-            seleccion = self.tabla.selection()
-            if seleccion:
-                item = seleccion[0]                
-                nombre_categoria = self.tabla.item(item, "text")                
-
-        self.tabla.bind("<ButtonRelease-1>", on_click)
 
         def llenar_tabla():
             self.tabla.delete(*self.tabla.get_children())
@@ -2021,7 +2028,7 @@ class Categorias(CTkToplevel):
                             )
                         cursor = conn.cursor()
 
-                        sql = f""" INSERT INTO `categorias`(`Nombre`) VALUES ('{temp.texto_nombre.get()}') """
+                        sql = f""" INSERT INTO `categorias`(`Nombre`) VALUES ('{sqlq(temp.texto_nombre.get())}') """
                         cursor.execute(sql)
                         conn.commit()
 
@@ -2035,9 +2042,14 @@ class Categorias(CTkToplevel):
 
 
         def eliminar():
-            global nombre_categoria            
+            seleccion = self.tabla.selection()
+            if not seleccion:
+                error = messagebox.showerror("Error","Selecciona una categoria para eliminar")
+                return
+            nombre_cat = self.tabla.item(seleccion[0], "text")
+
             try:
-                string = f"Vas a eliminar a {nombre_categoria} de las categorias"
+                string = f"Vas a eliminar a {nombre_cat} de las categorias"
                 conf = messagebox.askokcancel("Confirmar",string)    
                 if conf:
                     conn = mysql.connector.connect(
@@ -2048,17 +2060,19 @@ class Categorias(CTkToplevel):
                         )
                     cursor = conn.cursor()
 
-                    sql = f""" DELETE FROM `categorias` WHERE `Nombre` = "{nombre_categoria}" """
+                    sql = f""" DELETE FROM `categorias` WHERE `Nombre` = "{sqlq(nombre_cat)}" """
                     cursor.execute(sql)
                     conn.commit()
 
                     llenar_tabla()
 
                     term = messagebox.showinfo("Terminado","Se ha eliminado la Categoria")
-                    nombre_categoria = None
 
-            except:
-                error = messagebox.showerror("Error","Selecciona una categoria para eliminar")                    
+            except Exception:
+                traceback.print_exc()
+                error = messagebox.showerror("Error","No se pudo eliminar la categoria")                    
+
+       
 
        
 
@@ -2201,7 +2215,7 @@ class Envian(CTkToplevel):
                             )
                         cursor = conn.cursor()                        
 
-                        sql = f""" INSERT INTO `envia`(`Id`, `Nombre`) VALUES ('{id_entrada}','{temp.texto_nombre.get()}') """
+                        sql = f""" INSERT INTO `envia`(`Id`, `Nombre`) VALUES ('{sqlq(id_entrada)}','{sqlq(temp.texto_nombre.get())}') """
                         cursor.execute(sql)
                         conn.commit()
 
@@ -2218,9 +2232,10 @@ class Envian(CTkToplevel):
 
         def double_click(event):            
             seleccion = self.tabla.selection()
-            if seleccion:
-                item = seleccion[0]                
-                nombre = self.tabla.item(item, "text") 
+            if not seleccion:
+                return
+            item = seleccion[0]                
+            nombre = self.tabla.item(item, "text") 
 
             conf = messagebox.askokcancel("Confirmar","Se va a eliminar") 
             if conf:
@@ -2232,7 +2247,7 @@ class Envian(CTkToplevel):
                     )
                 cursor = conn.cursor()
 
-                sql = f""" DELETE FROM `envia` WHERE `Nombre` = "{nombre}" """
+                sql = f""" DELETE FROM `envia` WHERE `Nombre` = "{sqlq(nombre)}" """
                 cursor.execute(sql)
                 conn.commit()
 
@@ -2367,7 +2382,7 @@ class Reciben(CTkToplevel):
                         )
                     cursor = conn.cursor()                        
 
-                    sql = f""" INSERT INTO `recibe`(`Id`, `Nombre`, `Direccion`, `Telefono`) VALUES ('{id_entrada}','{temp.texto_nombre.get()}','{temp.texto_direccion.get()}','{temp.texto_telefono.get()}') """
+                    sql = f""" INSERT INTO `recibe`(`Id`, `Nombre`, `Direccion`, `Telefono`) VALUES ('{sqlq(id_entrada)}','{sqlq(temp.texto_nombre.get())}','{sqlq(temp.texto_direccion.get())}','{sqlq(temp.texto_telefono.get())}') """
                     cursor.execute(sql)
                     conn.commit()
 
@@ -2384,9 +2399,10 @@ class Reciben(CTkToplevel):
 
         def double_click(event):            
             seleccion = self.tabla.selection()
-            if seleccion:
-                item = seleccion[0]                
-                id_recibe = self.tabla.item(item, "text") 
+            if not seleccion:
+                return
+            item = seleccion[0]                
+            id_recibe = self.tabla.item(item, "text") 
 
             conf = messagebox.askokcancel("Confirmar","Se va a eliminar") 
             if conf:
@@ -2398,7 +2414,7 @@ class Reciben(CTkToplevel):
                     )
                 cursor = conn.cursor()
 
-                sql = f""" DELETE FROM `recibe` WHERE `Id` = "{id_recibe}" """
+                sql = f""" DELETE FROM `recibe` WHERE `Id` = "{sqlq(id_recibe)}" """
                 cursor.execute(sql)
                 conn.commit()
 
@@ -2493,6 +2509,14 @@ class Tarifas(CTkToplevel):
         mostrar_tarifa()
 
         def modificar():
+            # validamos las tarifas escritas (se acepta coma o punto decimal)
+            tarifa_usd = leer_numero(self.texto_usd.get(), "La tarifa del USD", permitir_cero = False)
+            if tarifa_usd is None:
+                return
+            tarifa_eur = leer_numero(self.texto_eur.get(), "La tarifa del EUR", permitir_cero = False)
+            if tarifa_eur is None:
+                return
+
             # hay que ver si hay que insertar (si no hay nada) o modificar
             vacio = False
             conn = mysql.connector.connect(
@@ -2519,7 +2543,7 @@ class Tarifas(CTkToplevel):
                         )
                     cursor = conn.cursor()
 
-                    sql = f""" INSERT INTO `tarifas`(`USD`, `EUR`, `EUR-USD`) VALUES ('{self.texto_usd.get()}','{self.texto_eur.get()}','{float(self.texto_eur.get())/float(self.texto_usd.get())}') """
+                    sql = f""" INSERT INTO `tarifas`(`USD`, `EUR`, `EUR-USD`) VALUES ('{sqlq(tarifa_usd)}','{sqlq(tarifa_eur)}','{sqlq(tarifa_eur/tarifa_usd)}') """
                     cursor.execute(sql)
                     conn.commit()
 
@@ -2539,7 +2563,7 @@ class Tarifas(CTkToplevel):
                         )
                     cursor = conn.cursor()
 
-                    sql = f""" UPDATE `tarifas` SET `USD`='{self.texto_usd.get()}',`EUR`='{self.texto_eur.get()}',`EUR-USD`='{float(self.texto_eur.get())/float(self.texto_usd.get())}' """
+                    sql = f""" UPDATE `tarifas` SET `USD`='{sqlq(tarifa_usd)}',`EUR`='{sqlq(tarifa_eur)}',`EUR-USD`='{sqlq(tarifa_eur/tarifa_usd)}' """
                     cursor.execute(sql)
                     conn.commit()
 
@@ -2750,6 +2774,23 @@ class NuevoProducto(CTkToplevel):
                 if cantidad_inicial is None:
                     return
 
+                if self.texto_nombre.get().strip() == "":
+                    messagebox.showerror("Error","El producto debe tener un nombre")
+                    return
+                if self.texto_categoria.get().strip() in ("", "..."):
+                    messagebox.showerror("Error","Debes escoger una categoria")
+                    return
+                costo_valido = leer_numero(self.texto_costo_usd.get(), "El costo")
+                if costo_valido is None:
+                    return
+                precio_valido = leer_numero(self.texto_precio.get(), "El precio")
+                if precio_valido is None:
+                    return
+                minimo_valido = leer_numero(self.texto_minimo.get() or "0", "El minimo")
+                if minimo_valido is None:
+                    return
+                minimo_valido = int(minimo_valido)
+
                 # verificar que no se repite el codigo en la bd 
                 conn = mysql.connector.connect(
                     host = "localhost",
@@ -2771,7 +2812,7 @@ class NuevoProducto(CTkToplevel):
                     if conf:
                         # agregar el producto en la bd 
                         cursor.execute("INSERT INTO `productos`(`Codigo`, `Nombre`, `CostoUsd`, `Precio`, `Cantidad`, `Categoria`, `Minimo`) VALUES (%s,%s,%s,%s,%s,%s,%s)",
-                                       (self.texto_codigo.get().strip(), self.texto_nombre.get(), self.texto_costo_usd.get(), self.texto_precio.get(), cantidad_inicial, self.texto_categoria.get(), self.texto_minimo.get()))
+                                       (self.texto_codigo.get().strip(), self.texto_nombre.get(), costo_valido, precio_valido, cantidad_inicial, self.texto_categoria.get(), minimo_valido))
 
                         # hallemos el id de la entrada
                         cursor.execute("SELECT MAX(Id) FROM `entradas`")
@@ -2780,7 +2821,7 @@ class NuevoProducto(CTkToplevel):
 
                         # agregar la entrada a la bd 
                         cursor.execute("INSERT INTO `entradas`(`Id`, `Fecha`, `Codigo`, `Nombre`, `CostoUsd`, `Cantidad`, `Categoria`) VALUES (%s,%s,%s,%s,%s,%s,%s)",
-                                       (id_entrada, fecha_actual, self.texto_codigo.get().strip(), self.texto_nombre.get(), self.texto_costo_usd.get(), cantidad_inicial, self.texto_categoria.get()))
+                                       (id_entrada, fecha_actual, self.texto_codigo.get().strip(), self.texto_nombre.get(), costo_valido, cantidad_inicial, self.texto_categoria.get()))
 
                         # el producto y su entrada se guardan juntos o no se guarda nada
                         conn.commit()
@@ -2878,7 +2919,7 @@ class Reabastecer(CTkToplevel):
                 )
             cursor = conn.cursor()
 
-            sql = f""" SELECT * FROM productos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%'; """
+            sql = f""" SELECT * FROM productos WHERE `Codigo` LIKE '%{sqlq(self.texto_buscador_codigo.get())}%' and `Nombre` LIKE '%{sqlq(self.texto_buscador_nombre.get())}%'; """
             cursor.execute(sql)
             for index in cursor:
                 self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],float(index[4]),index[5],))         
@@ -3138,7 +3179,7 @@ class Asociados(CTkToplevel):
                 )
             cursor = conn.cursor()
 
-            sql = f""" SELECT * FROM `asociados` WHERE `Fecha` = "{fecha_actual}"; """
+            sql = f""" SELECT * FROM `asociados` WHERE `Fecha` = "{sqlq(fecha_actual)}"; """
             cursor.execute(sql)
             for index in cursor:
                 self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],))
@@ -3167,6 +3208,13 @@ class Asociados(CTkToplevel):
             temp.texto_monto.pack(pady = 5)
 
             def aceptar_asociado():
+                # validamos lo escrito antes de preguntar y antes de tocar la base de datos
+                if temp.texto_concepto.get().strip() == "":
+                    messagebox.showerror("Error","Debes escribir el concepto del gasto")
+                    return
+                monto_valido = leer_numero(temp.texto_monto.get(), "El monto")
+                if monto_valido is None:
+                    return
                 try:
                     conf = messagebox.askokcancel("Confirmar","Se va a agregar el gasto")
                     if conf:
@@ -3199,7 +3247,7 @@ class Asociados(CTkToplevel):
                             )
                         cursor = conn.cursor()
 
-                        sql = f""" INSERT INTO `asociados`(`Id`, `Fecha`, `Concepto`, `Monto`) VALUES ('{id_asociado}','{fecha_actual}','{temp.texto_concepto.get()}','{temp.texto_monto.get()}') """
+                        sql = f""" INSERT INTO `asociados`(`Id`, `Fecha`, `Concepto`, `Monto`) VALUES ('{sqlq(id_asociado)}','{sqlq(fecha_actual)}','{sqlq(temp.texto_concepto.get())}','{sqlq(monto_valido)}') """
                         cursor.execute(sql)
                         conn.commit()
 
@@ -3272,12 +3320,12 @@ class Salarios(CTkToplevel):
         self.tabla.config(yscrollcommand = scrollbar.set)
 
         def escoger_concepto(event): 
-            global concepto_salario
 
             seleccion = self.tabla.selection()
-            if seleccion:
-                item = seleccion[0]                    
-                concepto_salario = self.tabla.item(item, "values")[1] 
+            if not seleccion:
+                return
+            item = seleccion[0]                    
+            concepto_salario = self.tabla.item(item, "values")[1] 
 
             self.texto_buscador_nombre.delete(0,END)
             self.texto_buscador_nombre.insert(0,concepto_salario)
@@ -3299,10 +3347,10 @@ class Salarios(CTkToplevel):
                 cursor = conn.cursor()
 
                 if self.texto_fecha_inicial.get() == "" or self.texto_fecha_final.get() == "":
-                    sql = f""" SELECT * FROM salarios WHERE `Concepto` LIKE '%{self.texto_buscador_nombre.get()}%' """
+                    sql = f""" SELECT * FROM salarios WHERE `Concepto` LIKE '%{sqlq(self.texto_buscador_nombre.get())}%' """
 
                 else:
-                    sql = f""" SELECT * FROM salarios WHERE `Concepto` LIKE '%{self.texto_buscador_nombre.get()}%' and `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    sql = f""" SELECT * FROM salarios WHERE `Concepto` LIKE '%{sqlq(self.texto_buscador_nombre.get())}%' and `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" """
 
                 cursor.execute(sql)
                 for index in cursor:
@@ -3482,13 +3530,13 @@ class Salarios(CTkToplevel):
                     else:
                         if vent.texto_cup.get() != "":
                             temp.texto_monto.delete(0,END)
-                            resultado = round(float(vent.texto_cup.get())/tar1,2)
+                            resultado = round(float(vent.texto_cup.get().replace(",", "."))/tar1,2)
                             temp.texto_monto.insert(0,resultado)
                             vent.destroy()
 
                         else:
                             temp.texto_monto.delete(0,END)
-                            resultado = round(float(vent.texto_eur.get())*tar3,2)
+                            resultado = round(float(vent.texto_eur.get().replace(",", "."))*tar3,2)
                             temp.texto_monto.insert(0,resultado)
                             vent.destroy()
 
@@ -3500,6 +3548,13 @@ class Salarios(CTkToplevel):
             temp.btn_cambio.pack()
 
             def aceptar_salario():
+                # validamos lo escrito antes de preguntar y antes de tocar la base de datos
+                if temp.texto_trabajador.get().strip() in ("", "Escoge Trabajador ..."):
+                    messagebox.showerror("Error","Debes escoger un trabajador")
+                    return
+                monto_valido = leer_numero(temp.texto_monto.get(), "El monto")
+                if monto_valido is None:
+                    return
                 try:
                     conf = messagebox.askokcancel("Confirmar","Se va a agregar el gasto")
                     if conf:
@@ -3532,7 +3587,7 @@ class Salarios(CTkToplevel):
                             )
                         cursor = conn.cursor()
 
-                        sql = f""" INSERT INTO `salarios`(`Id`, `Fecha`, `Concepto`, `Monto`) VALUES ('{id_salario}','{fecha_actual}','{temp.texto_trabajador.get()}','{temp.texto_monto.get()}') """
+                        sql = f""" INSERT INTO `salarios`(`Id`, `Fecha`, `Concepto`, `Monto`) VALUES ('{sqlq(id_salario)}','{sqlq(fecha_actual)}','{sqlq(temp.texto_trabajador.get())}','{sqlq(monto_valido)}') """
                         cursor.execute(sql)
                         conn.commit()
 
@@ -3552,9 +3607,10 @@ class Salarios(CTkToplevel):
 
         def double_click(event):            
             seleccion = self.tabla.selection()
-            if seleccion:
-                item = seleccion[0]                
-                id_salario = self.tabla.item(item, "text") 
+            if not seleccion:
+                return
+            item = seleccion[0]                
+            id_salario = self.tabla.item(item, "text") 
 
             conf = messagebox.askokcancel("Confirmar","Se va a eliminar") 
             if conf:
@@ -3566,7 +3622,7 @@ class Salarios(CTkToplevel):
                     )
                 cursor = conn.cursor()
 
-                sql = f""" DELETE FROM `salarios` WHERE `Id` = "{id_salario}" """
+                sql = f""" DELETE FROM `salarios` WHERE `Id` = "{sqlq(id_salario)}" """
                 cursor.execute(sql)
                 conn.commit()
 
@@ -3668,7 +3724,7 @@ class Almacen(CTkToplevel):
                 )
             cursor = conn.cursor()
 
-            sql = f""" SELECT * FROM productos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' ORDER BY `Codigo` ASC; """
+            sql = f""" SELECT * FROM productos WHERE `Codigo` LIKE '%{sqlq(self.texto_buscador_codigo.get())}%' and `Nombre` LIKE '%{sqlq(self.texto_buscador_nombre.get())}%' ORDER BY `Codigo` ASC; """
             cursor.execute(sql)
             for index in cursor:
                 self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],float(index[4]),index[5],index[6],))         
@@ -3690,14 +3746,13 @@ class Almacen(CTkToplevel):
         self.texto_buscador_nombre.bind("<KeyRelease>", llenar_tabla) 
 
         def doble_click(event):
-            global codigo_almacen
-            global nombre_almacen
             # vamos a capturar el codigo del producto
             seleccion = self.tabla.selection()
-            if seleccion:
-                item = seleccion[0]                
-                codigo_almacen = self.tabla.item(item, "text") 
-                nombre_almacen = self.tabla.item(item, "values")[0]
+            if not seleccion:
+                return
+            item = seleccion[0]                
+            codigo_almacen = self.tabla.item(item, "text") 
+            nombre_almacen = self.tabla.item(item, "values")[0]
 
 
             # vamos a crear la ventana modal
@@ -3809,13 +3864,13 @@ class Almacen(CTkToplevel):
                         else:
                             if vent.texto_cup.get() != "":
                                 root.texto_costo_usd.delete(0,END)
-                                resultado = round(float(vent.texto_cup.get())/tar1,2)
+                                resultado = round(float(vent.texto_cup.get().replace(",", "."))/tar1,2)
                                 root.texto_costo_usd.insert(0,resultado)
                                 vent.destroy()
 
                             else:
                                 root.texto_costo_usd.delete(0,END)
-                                resultado = round(float(vent.texto_eur.get())*tar3,2)
+                                resultado = round(float(vent.texto_eur.get().replace(",", "."))*tar3,2)
                                 root.texto_costo_usd.insert(0,resultado)
                                 vent.destroy()
 
@@ -3874,21 +3929,44 @@ class Almacen(CTkToplevel):
                     )
                 cursor = conn.cursor()
 
-                sql = f""" SELECT * FROM `productos` WHERE `Codigo` = "{codigo_almacen}" """
+                sql = f""" SELECT * FROM `productos` WHERE `Codigo` = "{sqlq(codigo_almacen)}" """
                 cursor.execute(sql)
                 for index in cursor:                                        
                     root.texto_nombre.insert(0,index[1]) 
                     root.texto_costo_usd.insert(0,index[2])
-                    root.texto_cantidad.insert(0,index[4])                    
+                    root.texto_cantidad.insert(0,float(index[4]))                    
                     root.texto_categoria.set(index[5])
                     root.texto_minimo.insert(0,index[6]) 
                     root.texto_precio.insert(0,index[3]) 
 
 
                 def modificar_producto():
-                    #try:
+                    # validamos los datos antes de preguntar y antes de tocar la base de datos
+                    nombre_nuevo = root.texto_nombre.get().strip()
+                    if nombre_nuevo == "":
+                        messagebox.showerror("Error","El producto debe tener un nombre")
+                        return
+
+                    cantidad_nueva = leer_cantidad(root.texto_cantidad.get(), permitir_cero = True)
+                    if cantidad_nueva is None:
+                        return
+
+                    try:
+                        costo_nuevo = float(root.texto_costo_usd.get().strip().replace(",", "."))
+                        precio_nuevo = float(root.texto_precio.get().strip().replace(",", "."))
+                        minimo_nuevo = int(float(root.texto_minimo.get().strip().replace(",", ".") or 0))
+                        if not (0 <= costo_nuevo < 1e12 and 0 <= precio_nuevo < 1e12 and 0 <= minimo_nuevo < 1e9):
+                            raise ValueError
+                    except (ValueError, OverflowError):
+                        messagebox.showerror("Error","El costo, el precio y el minimo deben ser numeros validos")
+                        return
+
                     conf = messagebox.askokcancel("Confirmar","Vamos a modificar el producto en la base de datos")
-                    if conf:                            
+                    if not conf:
+                        return
+
+                    conn = None
+                    try:
                         # modificar el producto en la bd 
                         conn = mysql.connector.connect(
                             host = "localhost",
@@ -3898,19 +3976,26 @@ class Almacen(CTkToplevel):
                             )
                         cursor = conn.cursor()                    
 
-                        sql = f""" UPDATE `productos` SET `Nombre`='{root.texto_nombre.get()}',`CostoUsd`='{root.texto_costo_usd.get()}',`Precio`='{root.texto_precio.get()}',`Cantidad`='{root.texto_cantidad.get()}',`Categoria`='{root.texto_categoria.get()}',`Minimo`='{root.texto_minimo.get()}' WHERE `Codigo` = "{codigo_almacen}"; """
-                        cursor.execute(sql)
-                        conn.commit()                           
+                        cursor.execute("UPDATE `productos` SET `Nombre` = %s, `CostoUsd` = %s, `Precio` = %s, `Cantidad` = %s, `Categoria` = %s, `Minimo` = %s WHERE `Codigo` = %s",
+                                       (nombre_nuevo, costo_nuevo, precio_nuevo, cantidad_nueva, root.texto_categoria.get(), minimo_nuevo, codigo_almacen))
+                        conn.commit()
+                        conn.close()
 
-                        completado = messagebox.showinfo("Completado","Se modifico el producto")
+                    except Exception:
+                        traceback.print_exc()
+                        try:
+                            conn.rollback()
+                        except Exception:
+                            pass
+                        messagebox.showerror("Error","No se ha podido modificar el producto")
+                        return
 
-                        llenar_tabla(True)
-                        alctualizar_equivalencia()
-                        root.destroy()
-                        temp.destroy()
+                    completado = messagebox.showinfo("Completado","Se modifico el producto")
 
-                    #except:
-                    #    error = messagebox.showerror("Error","No se ha podido modificar el producto")
+                    llenar_tabla(True)
+                    alctualizar_equivalencia()
+                    root.destroy()
+                    temp.destroy()
 
                 root.btn_modificar = CTkButton(root,text="Modificar",command=modificar_producto, width = 150, height = 40)
                 root.btn_modificar.place(x=650 ,y=500 )
@@ -3931,7 +4016,7 @@ class Almacen(CTkToplevel):
                             )
                         cursor = conn.cursor()
 
-                        sql = f""" DELETE FROM `productos` WHERE `Codigo` = "{codigo_almacen}" """
+                        sql = f""" DELETE FROM `productos` WHERE `Codigo` = "{sqlq(codigo_almacen)}" """
                         cursor.execute(sql)
                         conn.commit()
 
@@ -4005,12 +4090,12 @@ class ConsultaSalarios(CTkToplevel):
         self.tabla.config(yscrollcommand = scrollbar.set)
 
         def escoger_concepto(event): 
-            global concepto_salario
 
             seleccion = self.tabla.selection()
-            if seleccion:
-                item = seleccion[0]                    
-                concepto_salario = self.tabla.item(item, "values")[1] 
+            if not seleccion:
+                return
+            item = seleccion[0]                    
+            concepto_salario = self.tabla.item(item, "values")[1] 
 
             self.texto_buscador_nombre.delete(0,END)
             self.texto_buscador_nombre.insert(0,concepto_salario)
@@ -4032,10 +4117,10 @@ class ConsultaSalarios(CTkToplevel):
                 cursor = conn.cursor()
 
                 if self.texto_fecha_inicial.get() == "" or self.texto_fecha_final.get() == "":
-                    sql = f""" SELECT * FROM salarios WHERE `Concepto` LIKE '%{self.texto_buscador_nombre.get()}%' """
+                    sql = f""" SELECT * FROM salarios WHERE `Concepto` LIKE '%{sqlq(self.texto_buscador_nombre.get())}%' """
 
                 else:
-                    sql = f""" SELECT * FROM salarios WHERE `Concepto` LIKE '%{self.texto_buscador_nombre.get()}%' and `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    sql = f""" SELECT * FROM salarios WHERE `Concepto` LIKE '%{sqlq(self.texto_buscador_nombre.get())}%' and `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" """
 
                 cursor.execute(sql)
                 for index in cursor:
@@ -4180,12 +4265,12 @@ class ConsultaAsociados(CTkToplevel):
         self.tabla.config(yscrollcommand = scrollbar.set)
 
         def escoger_concepto(event): 
-            global concepto_asociado
 
             seleccion = self.tabla.selection()
-            if seleccion:
-                item = seleccion[0]                    
-                concepto_asociado = self.tabla.item(item, "values")[1] 
+            if not seleccion:
+                return
+            item = seleccion[0]                    
+            concepto_asociado = self.tabla.item(item, "values")[1] 
 
             self.texto_buscador_nombre.delete(0,END)
             self.texto_buscador_nombre.insert(0,concepto_asociado)
@@ -4207,10 +4292,10 @@ class ConsultaAsociados(CTkToplevel):
                 cursor = conn.cursor()
 
                 if self.texto_fecha_inicial.get() == "" or self.texto_fecha_final.get() == "":
-                    sql = f""" SELECT * FROM asociados WHERE `Concepto` LIKE '%{self.texto_buscador_nombre.get()}%' """
+                    sql = f""" SELECT * FROM asociados WHERE `Concepto` LIKE '%{sqlq(self.texto_buscador_nombre.get())}%' """
 
                 else:
-                    sql = f""" SELECT * FROM asociados WHERE `Concepto` LIKE '%{self.texto_buscador_nombre.get()}%' and `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    sql = f""" SELECT * FROM asociados WHERE `Concepto` LIKE '%{sqlq(self.texto_buscador_nombre.get())}%' and `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" """
 
                 cursor.execute(sql)
                 for index in cursor:
@@ -4371,7 +4456,7 @@ class Ventas(CTkToplevel):
                 database = "lilly"
                 )
             cursor = conn.cursor()           
-            sql = f""" SELECT * FROM productos WHERE `Nombre` LIKE '%{self.texto_buscador.get()}%' """
+            sql = f""" SELECT * FROM productos WHERE `Nombre` LIKE '%{sqlq(self.texto_buscador.get())}%' """
             cursor.execute(sql)
             for index in cursor:
                 self.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],float(index[4]),index[5],)) 
@@ -4901,7 +4986,7 @@ class Ventas(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()           
-                    sql = f""" SELECT `Nombre` FROM `envia` WHERE `Nombre` LIKE '%{temp.texto_envia.get()}%'; """
+                    sql = f""" SELECT `Nombre` FROM `envia` WHERE `Nombre` LIKE '%{sqlq(temp.texto_envia.get())}%'; """
                     cursor.execute(sql)
                     for index in cursor:                        
                         tabla_envian.insert("",END, text = index[0],)
@@ -4909,13 +4994,13 @@ class Ventas(CTkToplevel):
                     # ahora al dar 2ble click se escribira el nombre en el campo
                     def escribir_envia(event):
                         global vent_envian
-                        
-                        temp.texto_envia.delete(0,END)
-                        seleccion = tabla_envian.selection()
-                        if seleccion:
-                            item = seleccion[0]                
-                            envia = tabla_envian.item(item, "text") 
 
+                        seleccion = tabla_envian.selection()
+                        if not seleccion:
+                            return
+                        envia = tabla_envian.item(seleccion[0], "text") 
+
+                        temp.texto_envia.delete(0,END)
                         temp.texto_envia.insert(0,envia)
                         vent_envian.destroy()   
                         vent_envian = None                 
@@ -4956,7 +5041,7 @@ class Ventas(CTkToplevel):
                                 database = "lilly"
                                 )
                             cursor = conn.cursor()           
-                            sql = f""" INSERT INTO `envia`(`Id`, `Nombre`) VALUES ('{id_envia}','{temp.texto_envia.get()}') """
+                            sql = f""" INSERT INTO `envia`(`Id`, `Nombre`) VALUES ('{sqlq(id_envia)}','{sqlq(temp.texto_envia.get())}') """
                             cursor.execute(sql)
                             conn.commit()
 
@@ -5023,7 +5108,7 @@ class Ventas(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()           
-                    sql = f""" SELECT `Nombre` FROM `recibe` WHERE `Nombre` LIKE '%{temp.texto_recibe.get()}%'; """
+                    sql = f""" SELECT `Nombre` FROM `recibe` WHERE `Nombre` LIKE '%{sqlq(temp.texto_recibe.get())}%'; """
                     cursor.execute(sql)
                     for index in cursor:                        
                         tabla_reciben.insert("",END, text = index[0],)
@@ -5031,14 +5116,15 @@ class Ventas(CTkToplevel):
                     # ahora al dar 2ble click se escribira el nombre en el campo
                     def escribir_recibe(event):
                         global vent_reciben                        
+
+                        seleccion = tabla_reciben.selection()
+                        if not seleccion:
+                            return
+                        recibe = tabla_reciben.item(seleccion[0], "text") 
+
                         temp.texto_recibe.delete(0,END)                        
                         temp.texto_direccion.delete(0,END) 
                         temp.texto_telefono.delete(0,END) 
-
-                        seleccion = tabla_reciben.selection()
-                        if seleccion:
-                            item = seleccion[0]                
-                            recibe = tabla_reciben.item(item, "text") 
 
                         conn = mysql.connector.connect(
                             host = "localhost",
@@ -5047,7 +5133,7 @@ class Ventas(CTkToplevel):
                             database = "lilly"
                             )
                         cursor = conn.cursor()           
-                        sql = f""" SELECT * FROM `recibe` WHERE `Nombre` = "{recibe}" """
+                        sql = f""" SELECT * FROM `recibe` WHERE `Nombre` = "{sqlq(recibe)}" """
                         cursor.execute(sql)
                         for index in cursor: 
                             temp.texto_recibe.insert(0,index[1])
@@ -5092,7 +5178,7 @@ class Ventas(CTkToplevel):
                                 database = "lilly"
                                 )
                             cursor = conn.cursor()           
-                            sql = f""" INSERT INTO `recibe`(`Id`, `Nombre`, `Direccion`, `Telefono`) VALUES ('{id_recibe}','{temp.texto_recibe.get()}','{temp.texto_direccion.get()}','{temp.texto_telefono.get()}') """
+                            sql = f""" INSERT INTO `recibe`(`Id`, `Nombre`, `Direccion`, `Telefono`) VALUES ('{sqlq(id_recibe)}','{sqlq(temp.texto_recibe.get())}','{sqlq(temp.texto_direccion.get())}','{sqlq(temp.texto_telefono.get())}') """
                             cursor.execute(sql)
                             conn.commit()
 
@@ -5309,10 +5395,10 @@ class ControlRegalos(CTkToplevel):
                 cursor = conn.cursor()
 
                 if self.texto_fecha_inicial.get() == "" or self.texto_fecha_final.get() == "":
-                    sql = f""" SELECT * FROM regalos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' """
+                    sql = f""" SELECT * FROM regalos WHERE `Codigo` LIKE '%{sqlq(self.texto_buscador_codigo.get())}%' and `Nombre` LIKE '%{sqlq(self.texto_buscador_nombre.get())}%' """
 
                 else:
-                    sql = f""" SELECT * FROM regalos WHERE `Codigo` LIKE '%{self.texto_buscador_codigo.get()}%' and `Nombre` LIKE '%{self.texto_buscador_nombre.get()}%' and `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    sql = f""" SELECT * FROM regalos WHERE `Codigo` LIKE '%{sqlq(self.texto_buscador_codigo.get())}%' and `Nombre` LIKE '%{sqlq(self.texto_buscador_nombre.get())}%' and `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" """
 
                 cursor.execute(sql)
                 for index in cursor:
@@ -5529,7 +5615,7 @@ class ControlVentas(CTkToplevel):
                 pass
 
             else:
-                sql = f""" SELECT * FROM salidas WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                sql = f""" SELECT * FROM salidas WHERE `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" """
                 cursor.execute(sql)
 
             ventas_agrupadas = {}
@@ -5547,8 +5633,8 @@ class ControlVentas(CTkToplevel):
                     }
                 
                 # Acumular precios y costos
-                ventas_agrupadas[id_venta]['precio_total'] += index[5] * index[6]
-                ventas_agrupadas[id_venta]['costo_total'] += index[4] * index[6]
+                ventas_agrupadas[id_venta]['precio_total'] += float(index[5]) * float(index[6])
+                ventas_agrupadas[id_venta]['costo_total'] += float(index[4]) * float(index[6])
             
             # Insertar datos agrupados en la tabla
             for id_venta, datos in ventas_agrupadas.items():
@@ -5639,16 +5725,16 @@ class ControlVentas(CTkToplevel):
 
 
         def modificar_venta(event):
-            global id_venta                     
 
             # vamos a capturar el id de la venta 
             seleccion = self.tabla.selection()
-            if seleccion:
-                item = seleccion[0]                
-                id_venta = self.tabla.item(item, "text") 
-                fecha_venta = self.tabla.item(item, "values")[0] 
-                envia_venta = self.tabla.item(item, "values")[1] 
-                recibe_venta = self.tabla.item(item, "values")[2] 
+            if not seleccion:
+                return
+            item = seleccion[0]                
+            id_venta = self.tabla.item(item, "text") 
+            fecha_venta = self.tabla.item(item, "values")[0] 
+            envia_venta = self.tabla.item(item, "values")[1] 
+            recibe_venta = self.tabla.item(item, "values")[2] 
 
             # ahora vamos a mostrar una ventana con esta venta en especifico
             temp = CTkToplevel()
@@ -5708,7 +5794,7 @@ class ControlVentas(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                   
-                    sql = f""" SELECT * FROM `salidas` WHERE `Id` = {id_venta} """
+                    sql = f""" SELECT * FROM `salidas` WHERE `Id` = {sqlq(id_venta)} """
                     cursor.execute(sql)
                     for index in cursor:
                         temp.tabla_especifica.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],float(index[6]),index[7],index[8],))  
@@ -5821,7 +5907,7 @@ class ControlVentas(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()           
-                    sql = f""" SELECT * FROM productos WHERE `Nombre` LIKE '%{root.texto_buscador.get()}%' """
+                    sql = f""" SELECT * FROM productos WHERE `Nombre` LIKE '%{sqlq(root.texto_buscador.get())}%' """
                     cursor.execute(sql)
                     for index in cursor:
                         root.tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],float(index[4]),index[5],)) 
@@ -6070,7 +6156,7 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT  `Precio`, `Cantidad` FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    sql = f""" SELECT  `Precio`, `Cantidad` FROM `salidas` WHERE `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" """
                     cursor.execute(sql)
                     for index in cursor:                        
                         ingresos += index[0]*float(index[1])
@@ -6084,7 +6170,7 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT  `Monto` FROM `mensajeria` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    sql = f""" SELECT  `Monto` FROM `mensajeria` WHERE `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" """
                     cursor.execute(sql)
                     for index in cursor:                        
                         mensajeria += index[0]
@@ -6102,7 +6188,7 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT `Monto` FROM `asociados` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    sql = f""" SELECT `Monto` FROM `asociados` WHERE `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" """
                     cursor.execute(sql)
                     for index in cursor:
                         asociados += index[0]
@@ -6119,7 +6205,7 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT `Monto` FROM `salarios` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    sql = f""" SELECT `Monto` FROM `salarios` WHERE `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" """
                     cursor.execute(sql)
                     for index in cursor:
                         salarios += index[0]
@@ -6136,7 +6222,7 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT  `CostoUsd`, `Cantidad` FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    sql = f""" SELECT  `CostoUsd`, `Cantidad` FROM `salidas` WHERE `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" """
                     cursor.execute(sql)
                     for index in cursor:
                         costos_usd += index[0]*float(index[1])
@@ -6153,7 +6239,7 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT `CostoUsd`, `Cantidad` FROM `regalos` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                    sql = f""" SELECT `CostoUsd`, `Cantidad` FROM `regalos` WHERE `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" """
                     cursor.execute(sql)
                     for index in cursor:
                         regalos += index[0]*float(index[1])  
@@ -6177,7 +6263,7 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT Codigo, Nombre, SUM(Cantidad) AS total_unidades_vendidas FROM salidas WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY total_unidades_vendidas DESC LIMIT 1; """
+                    sql = f""" SELECT Codigo, Nombre, SUM(Cantidad) AS total_unidades_vendidas FROM salidas WHERE `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" GROUP BY Codigo, Nombre ORDER BY total_unidades_vendidas DESC LIMIT 1; """
                     cursor.execute(sql)
                     for index in cursor:
                         nombre = index[1]
@@ -6197,7 +6283,7 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT Codigo, Nombre, SUM(Cantidad) AS total_unidades_vendidas FROM salidas WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY total_unidades_vendidas ASC LIMIT 1; """
+                    sql = f""" SELECT Codigo, Nombre, SUM(Cantidad) AS total_unidades_vendidas FROM salidas WHERE `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" GROUP BY Codigo, Nombre ORDER BY total_unidades_vendidas ASC LIMIT 1; """
                     cursor.execute(sql)
                     for index in cursor:
                         nombre = index[1]
@@ -6218,13 +6304,13 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT Codigo, Nombre, SUM((Precio - CostoUsd) * Cantidad) AS ganancia_total FROM salidas WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY ganancia_total DESC LIMIT 1; """
+                    sql = f""" SELECT Codigo, Nombre, SUM((Precio - CostoUsd) * Cantidad) AS ganancia_total FROM salidas WHERE `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" GROUP BY Codigo, Nombre ORDER BY ganancia_total DESC LIMIT 1; """
                     cursor.execute(sql)
                     for index in cursor:
                         nombre = index[1]
                         ganancia = index[2]
 
-                    string = f" ({round(ganancia, 2)})"
+                    string = f" ({round(float(ganancia), 2)})"
                     string_mas_ganancia.set(nombre + string)
 
                     ###############################################################
@@ -6239,13 +6325,13 @@ class ConsultaTotales(CTkToplevel):
                         database = "lilly"
                         )
                     cursor = conn.cursor()                    
-                    sql = f""" SELECT Codigo, Nombre, SUM((Precio - CostoUsd) * Cantidad) AS ganancia_total FROM salidas WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" GROUP BY Codigo, Nombre ORDER BY ganancia_total ASC LIMIT 1; """
+                    sql = f""" SELECT Codigo, Nombre, SUM((Precio - CostoUsd) * Cantidad) AS ganancia_total FROM salidas WHERE `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" GROUP BY Codigo, Nombre ORDER BY ganancia_total ASC LIMIT 1; """
                     cursor.execute(sql)
                     for index in cursor:
                         nombre = index[1]
                         ganancia = index[2]
 
-                    string = f" ({round(ganancia, 2)})"
+                    string = f" ({round(float(ganancia), 2)})"
                     string_menos_ganancia.set(nombre + string)
 
                     ############################################################
@@ -6510,7 +6596,7 @@ class Clientes(CTkToplevel):
                     )
                 cursor = conn.cursor()
 
-                sql = f""" SELECT `Envia`, COUNT(DISTINCT `Id`) AS CantidadEnvios, SUM(`Precio` * `Cantidad`) AS MontoTotal FROM `salidas` WHERE `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" GROUP BY `Envia` ORDER BY `CantidadEnvios` DESC; """
+                sql = f""" SELECT `Envia`, COUNT(DISTINCT `Id`) AS CantidadEnvios, SUM(`Precio` * `Cantidad`) AS MontoTotal FROM `salidas` WHERE `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" GROUP BY `Envia` ORDER BY `CantidadEnvios` DESC; """
                 cursor.execute(sql)
                 for index in cursor:
                     self.tabla.insert("",END, text = index[0], values = (index[1],index[2],))  
@@ -6588,6 +6674,8 @@ class Clientes(CTkToplevel):
 
         # ahora configuremos para que al dar 2ble click desglose las ventas de esa persona que envia 
         def double_click(event):
+            if not self.tabla.selection():
+                return
             temp = CTkToplevel()
             temp.title("Desglose") 
             htotal = temp.winfo_screenheight()
@@ -6637,9 +6725,10 @@ class Clientes(CTkToplevel):
                 tabla.delete(*tabla.get_children())
 
                 seleccion = self.tabla.selection()
-                if seleccion:
-                    item = seleccion[0]                
-                    envia = self.tabla.item(item, "text") 
+                if not seleccion:
+                    return
+                item = seleccion[0]                
+                envia = self.tabla.item(item, "text") 
                 
                 conn = mysql.connector.connect(
                     host = "localhost",
@@ -6649,7 +6738,7 @@ class Clientes(CTkToplevel):
                     )
                 cursor = conn.cursor()
 
-                sql = f""" SELECT * FROM salidas WHERE `Envia` = '{envia}' and `Fecha` >= "{self.texto_fecha_inicial.get()}" and `Fecha` < "{self.texto_fecha_final.get()}" """
+                sql = f""" SELECT * FROM salidas WHERE `Envia` = '{sqlq(envia)}' and `Fecha` >= "{sqlq(self.texto_fecha_inicial.get())}" and `Fecha` < "{sqlq(self.texto_fecha_final.get())}" """
                 cursor.execute(sql)
                 for index in cursor:
                     tabla.insert("",END, text = index[0], values = (index[1],index[2],index[3],index[4],index[5],float(index[6]),index[7],index[8],))  
