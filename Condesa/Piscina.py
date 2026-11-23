@@ -15,8 +15,8 @@ import os
 # ********************************** Constantes y utilidades ****************************
 # ***************************************************************************************
 
-RUTA_IMG = "D:/condesa/imagenes funcionamiento/"
-ICONO = RUTA_IMG + "condesa_icono.ico"
+RUTA_IMG = "D:/piscina/imagenes funcionamiento/"
+ICONO = RUTA_IMG + "piscina_icono.ico"
 
 fecha_actual = datetime.now().date()
 fecha_vencimiento = None
@@ -40,9 +40,9 @@ SQL_UPDATE_PRODUCTO = (
 def conectar():
     return mysql.connector.connect(
         host="localhost",
-        user="condesa",
+        user="piscina",
         password="123456",
-        database="condesa"
+        database="piscina"
     )
 
 
@@ -376,26 +376,26 @@ cursor = conn.cursor()
 
 # ********************** creando usuario admin ******************************
 try:
-    cursor.execute("""CREATE USER 'condesa'@'localhost' IDENTIFIED BY '123456';""")
+    cursor.execute("""CREATE USER 'piscina'@'localhost' IDENTIFIED BY '123456';""")
     conn.commit()
 except Exception:
     pass
 
-sql = """GRANT ALL PRIVILEGES ON *.* TO 'condesa'@'localhost' REQUIRE NONE WITH GRANT OPTION MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0; """
+sql = """GRANT ALL PRIVILEGES ON *.* TO 'piscina'@'localhost' REQUIRE NONE WITH GRANT OPTION MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0; """
 cursor.execute(sql)
 conn.commit()
 conn.close()
 
 conn = mysql.connector.connect(
     host="localhost",
-    user="condesa",
+    user="piscina",
     password="123456",
 )
 cursor = conn.cursor()
 
-# ******* creando la base de datos condesa ***********
+# ******* creando la base de datos piscina ***********
 try:
-    cursor.execute("""CREATE DATABASE condesa CHARACTER SET = utf8mb4 COLLATE utf8mb4_spanish_ci;""")
+    cursor.execute("""CREATE DATABASE piscina CHARACTER SET = utf8mb4 COLLATE utf8mb4_spanish_ci;""")
     conn.commit()
 except Exception:
     pass
@@ -414,9 +414,9 @@ except Exception:
 cursor.execute("""SELECT Usuario FROM usuarios""")
 usuarios_iniciales = [fila[0] for fila in cursor.fetchall()]
 
-if "condesa" not in usuarios_iniciales:
+if "piscina" not in usuarios_iniciales:
     try:
-        cursor.execute("""INSERT INTO usuarios (Usuario,Password) VALUES ("condesa","123456")""")
+        cursor.execute("""INSERT INTO usuarios (Usuario,Password) VALUES ("piscina","123456")""")
         conn.commit()
     except Exception:
         pass
@@ -426,27 +426,27 @@ _columnas_insumos_sql = ", ".join(f"`Insumo{i}` INT(11) NOT NULL, `Cantidad{i}` 
 
 SQL_TABLAS = [
     # licencias
-    """CREATE TABLE `condesa`.`licencias` (`codigo_lic` VARCHAR(50) NOT NULL , `pass_economia` VARCHAR(50) NOT NULL ) ENGINE = InnoDB;""",
+    """CREATE TABLE `piscina`.`licencias` (`codigo_lic` VARCHAR(50) NOT NULL , `pass_economia` VARCHAR(50) NOT NULL ) ENGINE = InnoDB;""",
     # categorias
-    """CREATE TABLE `condesa`.`categorias` (`Nombre` VARCHAR(50) NOT NULL ) ENGINE = InnoDB;""",
+    """CREATE TABLE `piscina`.`categorias` (`Nombre` VARCHAR(50) NOT NULL ) ENGINE = InnoDB;""",
     # categorias_productos
-    """CREATE TABLE `condesa`.`categorias_productos` (`Nombre` VARCHAR(50) NOT NULL ) ENGINE = InnoDB;""",
+    """CREATE TABLE `piscina`.`categorias_productos` (`Nombre` VARCHAR(50) NOT NULL ) ENGINE = InnoDB;""",
     # insumos
-    """CREATE TABLE `condesa`.`insumos` (`Codigo` INT(11) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `Costo` FLOAT NOT NULL, `Cantidad` FLOAT NOT NULL, `U/M` VARCHAR(50) NOT NULL, `Categoria` VARCHAR(50) NOT NULL) ENGINE = InnoDB; """,
+    """CREATE TABLE `piscina`.`insumos` (`Codigo` INT(11) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `Costo` FLOAT NOT NULL, `Cantidad` FLOAT NOT NULL, `U/M` VARCHAR(50) NOT NULL, `Categoria` VARCHAR(50) NOT NULL) ENGINE = InnoDB; """,
     # entradas
-    """CREATE TABLE `condesa`.`entradas` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` INT NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `Costo` FLOAT NOT NULL, `Cantidad` FLOAT NOT NULL,`Categoria` VARCHAR(50) NOT NULL) ENGINE = InnoDB;""",
+    """CREATE TABLE `piscina`.`entradas` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` INT NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `Costo` FLOAT NOT NULL, `Cantidad` FLOAT NOT NULL,`Categoria` VARCHAR(50) NOT NULL) ENGINE = InnoDB;""",
     # productos (PrecioUsd va entre Costo y Precio)
-    "CREATE TABLE `condesa`.`productos` (`Codigo` INT(11) NOT NULL, `Nombre` VARCHAR(50) NOT NULL, "
+    "CREATE TABLE `piscina`.`productos` (`Codigo` INT(11) NOT NULL, `Nombre` VARCHAR(50) NOT NULL, "
     "`Costo` FLOAT NOT NULL, `PrecioUsd` FLOAT NOT NULL, `Precio` FLOAT NOT NULL, `Categoria` VARCHAR(50) NOT NULL, "
     + _columnas_insumos_sql + ") ENGINE = InnoDB;",
     # salidas
-    """CREATE TABLE `condesa`.`salidas` (`Id` INT(11) NOT NULL, `Fecha` DATE NOT NULL,`Codigo` INT(11) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `Costo` FLOAT NOT NULL, `Precio` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Categoria` VARCHAR(50) NOT NULL) ENGINE = InnoDB;""",
+    """CREATE TABLE `piscina`.`salidas` (`Id` INT(11) NOT NULL, `Fecha` DATE NOT NULL,`Codigo` INT(11) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `Costo` FLOAT NOT NULL, `Precio` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Categoria` VARCHAR(50) NOT NULL) ENGINE = InnoDB;""",
     # regalos
-    """CREATE TABLE `condesa`.`regalos` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` VARCHAR(50) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `Costo` FLOAT NOT NULL, `Precio` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Concepto` VARCHAR(50) NOT NULL) ENGINE = InnoDB;""",
+    """CREATE TABLE `piscina`.`regalos` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL,`Codigo` VARCHAR(50) NOT NULL, `Nombre` VARCHAR(100) NOT NULL, `Costo` FLOAT NOT NULL, `Precio` FLOAT NOT NULL, `Cantidad` INT NOT NULL, `Concepto` VARCHAR(50) NOT NULL) ENGINE = InnoDB;""",
     # gastos asociados
-    """CREATE TABLE `condesa`.`asociados` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL, `Concepto` VARCHAR(100) NOT NULL, `Monto` FLOAT NOT NULL) ENGINE = InnoDB;""",
+    """CREATE TABLE `piscina`.`asociados` (`Id` INT NOT NULL, `Fecha` DATE NOT NULL, `Concepto` VARCHAR(100) NOT NULL, `Monto` FLOAT NOT NULL) ENGINE = InnoDB;""",
     # tarifa (una sola columna)
-    """CREATE TABLE `condesa`.`Tarifa` (`Usd` FLOAT NOT NULL) ENGINE = InnoDB;""",
+    """CREATE TABLE `piscina`.`Tarifa` (`Usd` FLOAT NOT NULL) ENGINE = InnoDB;""",
 ]
 
 for sql in SQL_TABLAS:
@@ -628,7 +628,7 @@ class NuevaLicencia:
 
 class Lobby:
     def __init__(self):
-        self = crear_ventana("Lobby", "Condesa", 1300, 700)
+        self = crear_ventana("Lobby", "piscina", 1300, 700)
         poner_fondo(self, "fondo3.jpg", 1300, 700)
 
         firma = "Vence (" + str(fecha_vencimiento) + ")"
@@ -640,18 +640,18 @@ class Lobby:
 
         def salva_lobby():
             # Crear carpeta de respaldos si no existe
-            carpeta_respaldo = "D:/condesa/respaldos"
+            carpeta_respaldo = "D:/piscina/respaldos"
             if not os.path.exists(carpeta_respaldo):
                 os.makedirs(carpeta_respaldo)
 
-            nombre_archivo = f"condesa_{fecha_actual}.sql"
+            nombre_archivo = f"piscina_{fecha_actual}.sql"
             ruta_completa = os.path.join(carpeta_respaldo, nombre_archivo)
 
             # Ruta de mysqldump en XAMPP
             ruta_mysqldump = "C:/xampp/mysql/bin/mysqldump.exe"
 
             try:
-                comando = f'"{ruta_mysqldump}" -u condesa -p123456 condesa > "{ruta_completa}"'
+                comando = f'"{ruta_mysqldump}" -u piscina -p123456 piscina > "{ruta_completa}"'
                 resultado = subprocess.run(comando, shell=True, capture_output=True, text=True)
 
                 if os.path.exists(ruta_completa) and os.path.getsize(ruta_completa) > 0:
@@ -770,7 +770,7 @@ class EliminarUsuario:
         def eliminar():
             usuario = combo.get()
             try:
-                if usuario == "condesa":
+                if usuario == "piscina":
                     messagebox.showinfo("Error", "Ese usuario no puede eliminarse")
                     return
                 if not any(usuario == u for u, _ in autorizacion):
@@ -1766,7 +1766,7 @@ class ControlVentas:
             try:
                 df = pd.DataFrame(datos)
 
-                carpeta = "D:/Condesa/respaldos"
+                carpeta = "D:/piscina/respaldos"
                 if not os.path.exists(carpeta):
                     os.makedirs(carpeta)
 
@@ -1993,7 +1993,7 @@ class ConsultaTotales:
 
                 df = pd.DataFrame(datos)
 
-                carpeta_respaldo = "D:/condesa/respaldos"
+                carpeta_respaldo = "D:/piscina/respaldos"
                 if not os.path.exists(carpeta_respaldo):
                     os.makedirs(carpeta_respaldo)
 
